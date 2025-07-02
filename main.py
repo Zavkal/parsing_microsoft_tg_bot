@@ -1,25 +1,33 @@
 import asyncio
+import logging
 
-from bot.logger import logger
-from bot.config import dp, bot
 # from bot.middleware.authorization import AuthorizationMiddleware
 
 from bot.handlers.base_menu import router as start_router
 from bot.handlers.sale import router as sale
 from bot.handlers.parsing_sale import router as parsing_sale
 from bot.handlers.auto_parsing import router as auto_parsing
+from bot.handlers.get_data import router as get_data_file
+from bot.handlers.big_parser import router as big_parser
 
-from database.db_bot import start_db
+from config import dp, bot
+
+from database.db_bot import DataBase
+from database.db import start_db as start_pars_db
 
 
 async def main() -> None:
-    await start_db()
-    logger.info("[Запуск бота] Бот запущен ассинхронно!")
+    db = DataBase()
+    await db.start_db()
+    start_pars_db()
+    logging.info("[Запуск бота] Бот запущен ассинхронно!")
     dp.include_routers(
         start_router,
         sale,
         parsing_sale,
         auto_parsing,
+        get_data_file,
+        big_parser,
 
     )
     # dp.callback_query.middleware(AuthorizationMiddleware())

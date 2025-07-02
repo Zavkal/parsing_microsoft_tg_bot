@@ -103,7 +103,6 @@ celerybeat.pid
 
 # Environments
 .env
-!.env
 .venv
 env/
 venv/
@@ -131,3 +130,5 @@ dmypy.json
 
 # IDEA
 .idea/
+db.db
+db_bot.db

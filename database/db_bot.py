@@ -1,63 +1,83 @@
-import sqlite3
-
-relative_path = "db_bot.db"
-
-conn = sqlite3.connect(relative_path)
-cur = conn.cursor()
+from contextlib import asynccontextmanager
+import aiosqlite
 
 
-async def start_db():
-    cur.execute("""CREATE TABLE IF NOT EXISTS config(
-        date_auto_pars_sale TEXT,
-        time_auto_pars_sale TEXT,
-        date_auto_pars_products TEXT,
-        time_auto_pars_products TEXT,
-        date_auto_pars_new_products TEXT,
-        time_auto_pars_new_products TEXT
-        )
-        """)
-
-    cur.execute("""CREATE TABLE IF NOT EXISTS country(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        "IN" BOOL DEFAULT 0,
-        NG BOOl DEFAULT 0,
-        US BOOl DEFAULT 0,
-        AR BOOl DEFAULT 0,
-        TR BOOl DEFAULT 0,
-        UA BOOl DEFAULT 0
-        )
-        """)
-
-    # Проверяем, есть ли записи в таблице country
-    cur.execute("SELECT COUNT(*) FROM country")
-    count = cur.fetchone()[0]
-
-    # Если записей нет, добавляем начальную строку
-    if count == 0:
-        cur.execute("""
-                INSERT INTO country ("IN", NG, US, AR, TR, UA)
-                VALUES (0, 0, 0, 0, 0, 0)
-            """)
-
-    # Сохраняем изменения
-    conn.commit()
+class DataBase:
+    def __init__(self, db_path: str = "db_bot.db"):
+        self.db_path = db_path
 
 
-def get_all_county_pars():
-    cur.execute('SELECT * FROM country')
-    row = cur.fetchall()[0]
-    return {
-        "IN": row[1],
-        "NG": row[2],
-        "US": row[3],
-        "AR": row[4],
-        "TR": row[5],
-        "UA": row[6],
-    }
+    @asynccontextmanager
+    async def get_session(self):
+        conn = await aiosqlite.connect(self.db_path)
+        try:
+            yield conn
+            await conn.commit()
+        except Exception:
+            await conn.rollback()
+            raise
+        finally:
+            await conn.close()
 
 
-def update_region_pars(region: str, status: int):
-    # Используем параметризованный запрос для безопасности
-    query = f'UPDATE country SET "{region}" = ?'
-    cur.execute(query, (status,))
-    conn.commit()
+    async def start_db(self, ):
+        async with self.get_session() as conn:
+            await conn.execute("""CREATE TABLE IF NOT EXISTS config(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                last_date_pars_sale TEXT,
+                time_pars_sale TEXT,
+                last_date_pars_products TEXT,
+                time_pars_products TEXT,
+                last_pars_new_products TEXT,
+                time_pars_new_products TEXT
+                )
+                """)
+
+            await conn.execute("""CREATE TABLE IF NOT EXISTS country(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                "IN" BOOL DEFAULT 0,
+                NG BOOl DEFAULT 0,
+                US BOOl DEFAULT 0,
+                AR BOOl DEFAULT 0,
+                TR BOOl DEFAULT 0,
+                UA BOOl DEFAULT 0
+                )
+                """)
+
+            await conn.execute("""CREATE TABLE IF NOT EXISTS country_price(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                "IN" BOOL DEFAULT 0,
+                NG BOOl DEFAULT 0,
+                US BOOl DEFAULT 0,
+                AR BOOl DEFAULT 0,
+                TR BOOl DEFAULT 0,
+                UA BOOl DEFAULT 0
+                )
+                """)
+
+            # Проверяем, есть ли записи в таблице country
+            cursor = await conn.execute("SELECT COUNT(*) FROM country")
+            count = await cursor.fetchone()
+
+            # Если записей нет, добавляем начальную строку
+            if count == 0:
+                await conn.execute("""
+                        INSERT INTO country ("IN", NG, US, AR, TR, UA)
+                        VALUES (0, 0, 0, 0, 0, 0)
+                    """)
+
+            # Проверяем, есть ли записи в таблице country
+            cursor = await conn.execute("SELECT COUNT(*) FROM country_price")
+            count = await cursor.fetchone()
+
+            # Если записей нет, добавляем начальную строку
+            if count == 0:
+                await conn.execute("""
+                        INSERT INTO country_price ("IN", NG, US, AR, TR, UA)
+                        VALUES (0, 0, 0, 0, 0, 0)
+                    """)
+
+
+
+
+

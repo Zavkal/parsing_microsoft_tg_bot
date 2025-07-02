@@ -5,7 +5,7 @@
 # from aiogram.dispatcher.flags import get_flag
 # from aiogram.types import Message, TelegramObject, CallbackQuery
 #
-# from bot.config import ADMIN
+# from config import ADMIN
 #
 # from bot.middleware.admin_operations import get_users_id_with_rights, get_users_id_with_all_rights
 #
