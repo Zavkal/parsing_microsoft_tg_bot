@@ -1,0 +1,22 @@
+[project]
+name = "parsing-microsoft-tg-bot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Zavkal",email = "ivanovilya14122000@yandex.ru"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "seleniumbase (>=4.37.12,<5.0.0)",
+    "aiogram (>=3.20.0.post0,<4.0.0)",
+    "pytz (>=2025.2,<2026.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)",
+    "pydantic (>=2.11.7,<3.0.0)",
+    "aiosqlite (>=0.21.0,<0.22.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
