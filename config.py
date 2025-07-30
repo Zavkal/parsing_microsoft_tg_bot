@@ -1,33 +1,11 @@
 import logging
-import os
-
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from aiogram.fsm.storage.memory import MemoryStorage
-
-from dotenv import load_dotenv
 import pytz
 
-from bot.middleware.database import DBMiddleware
-from database.db_bot import DataBase
 
 # Указываем часовой пояс Москвы
 moscow_tz = pytz.timezone("Europe/Moscow")
 
-load_dotenv()
 ADMIN = "1637636761"  # 763197387 585028070 1637636761
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-
-bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties())
-
-
-dp = Dispatcher(bot=bot, storage=MemoryStorage())
-db = DataBase()
-dp.message.middleware(DBMiddleware(db))
-dp.callback_query.middleware(DBMiddleware(db))
-
 
 regions = ["IN", "NG", "US", "AR", "TR", "UA"]
 
@@ -62,5 +40,35 @@ product_pass = {
     'CFQ7TTC0K5DJ': 'Xbox Game Pass Core',
 
 }
+
+DEFAULT_SCHEDULES = [
+    {
+        "parser_name": "sale",
+        "frequency": "weekly",
+        "day_of_week": "monday",
+        "day_of_month": None,
+        "time": "10:30"
+    },
+    {
+        "parser_name": "products",
+        "frequency": "weekly",
+        "day_of_week": "friday",
+        "day_of_month": None,
+        "time": "11:00"
+    },
+    {
+        "parser_name": "new_products",
+        "frequency": "monthly",
+        "day_of_week": None,
+        "day_of_month": 1,
+        "time": "14:00"
+    }
+]
+
+parsing_name = {
+    "sale": "Распродажи",
+    "products": "Биг парсер",
+    "new_products": "Новые товары"}
+
 
 logging.basicConfig(level=logging.INFO)

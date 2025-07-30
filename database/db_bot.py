@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 import aiosqlite
 
+from config import DEFAULT_SCHEDULES
+
 
 class DataBase:
     def __init__(self, db_path: str = "db_bot.db"):
@@ -22,15 +24,16 @@ class DataBase:
 
     async def start_db(self, ):
         async with self.get_session() as conn:
-            await conn.execute("""CREATE TABLE IF NOT EXISTS config(
+            await conn.execute("""CREATE TABLE IF NOT EXISTS parser_schedule (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                last_date_pars_sale TEXT,
-                time_pars_sale TEXT,
-                last_date_pars_products TEXT,
-                time_pars_products TEXT,
-                last_pars_new_products TEXT,
-                time_pars_new_products TEXT
-                )
+                parser_name TEXT NOT NULL,              -- Название парсера: 'sale', 'products', 'new_products'
+                frequency TEXT NOT NULL,
+                day_of_week INTEGER,              -- День недели: 'monday', 'tuesday', и т.п.
+                day_of_month INTEGER,
+                time TEXT NOT NULL,                     -- Время запуска в формате HH:MM
+                is_enabled INTEGER DEFAULT 0,           -- Включено ли расписание
+                last_run TEXT                           -- Последний запуск (опционально, для логов)
+            );
                 """)
 
             await conn.execute("""CREATE TABLE IF NOT EXISTS country(
@@ -77,6 +80,25 @@ class DataBase:
                         VALUES (0, 0, 0, 0, 0, 0)
                     """)
 
+                # Проверяем, есть ли записи
+                cursor = await conn.execute("SELECT COUNT(*) FROM parser_schedule")
+                count = (await cursor.fetchone())[0]
+                if count == 0:
+                    for row in DEFAULT_SCHEDULES:
+                        await conn.execute("""
+                                           INSERT INTO parser_schedule (parser_name, frequency, day_of_week,
+                                                                        day_of_month, time)
+                                           VALUES (?, ?, ?, ?, ?)
+                                           """, (
+                                               row["parser_name"],
+                                               row["frequency"],
+                                               row["day_of_week"],
+                                               row["day_of_month"],
+                                               row["time"]
+                                           ))
+                    await conn.commit()
+
+                await conn.close()
 
 
 
