@@ -9,8 +9,7 @@ from bot.handlers.parsing_sale import router as parsing_sale
 from bot.handlers.auto_parsing import router as auto_parsing
 from bot.handlers.get_data import router as get_data_file
 from bot.handlers.big_parser import router as big_parser
-
-from config import dp, bot
+from config_bot import dp, bot
 
 from database.db_bot import DataBase
 from database.db import start_db as start_pars_db
