@@ -80,25 +80,23 @@ class DataBase:
                         VALUES (0, 0, 0, 0, 0, 0)
                     """)
 
-                # Проверяем, есть ли записи
-                cursor = await conn.execute("SELECT COUNT(*) FROM parser_schedule")
-                count = (await cursor.fetchone())[0]
-                if count == 0:
-                    for row in DEFAULT_SCHEDULES:
-                        await conn.execute("""
-                                           INSERT INTO parser_schedule (parser_name, frequency, day_of_week,
-                                                                        day_of_month, time)
-                                           VALUES (?, ?, ?, ?, ?)
-                                           """, (
-                                               row["parser_name"],
-                                               row["frequency"],
-                                               row["day_of_week"],
-                                               row["day_of_month"],
-                                               row["time"]
-                                           ))
-                    await conn.commit()
-
-                await conn.close()
+            # Проверяем, есть ли записи
+            cursor = await conn.execute("SELECT COUNT(*) FROM parser_schedule")
+            count = (await cursor.fetchone())[0]
+            if count == 0:
+                for row in DEFAULT_SCHEDULES:
+                    await conn.execute("""
+                                       INSERT INTO parser_schedule (parser_name, frequency, day_of_week,
+                                                                    day_of_month, time)
+                                       VALUES (?, ?, ?, ?, ?)
+                                       """, (
+                                           row["parser_name"],
+                                           row["frequency"],
+                                           row["day_of_week"],
+                                           row["day_of_month"],
+                                           row["time"]
+                                       ))
+                await conn.commit()
 
 
 
