@@ -2,32 +2,43 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def parsing_sale_keyboards():
-    parsing_sale_keyboards_ = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="✅ Запустить парсер", callback_data="start_parsing_sale")],
-            [InlineKeyboardButton(text="🏳️ Настройка регионов", callback_data="change_pars_regions")],
+            [InlineKeyboardButton(text="⚙️ Настройки", callback_data="settings_pars_sale")],
             [InlineKeyboardButton(text="⏪ Назад", callback_data="sale_panel")],
         ]
     )
-    return parsing_sale_keyboards_
+    return keyboard
+
+
+def parsing_sale_settings_kb():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🏳️ Настройка регионов", callback_data="change_pars_regions")],
+            [InlineKeyboardButton(text="🔗 Ссылки для автопарса ", callback_data="add_link_for_pars")],
+        ]
+    )
+    keyboard.inline_keyboard.extend(back_parsing_sale_keyboards().inline_keyboard)
+    return keyboard
 
 
 def back_parsing_sale_keyboards():
-    back_parsing_sale_keyboards_ = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="⏪ Назад", callback_data="parsing_sale")],
         ]
     )
-    return back_parsing_sale_keyboards_
+    return keyboard
 
 
 def stop_parser_sale_keyboards():
-    stop_parser_keyboards_ = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="⛔️ Остановить парсер распродаж", callback_data="stop_parser_sale")]
         ]
     )
-    return stop_parser_keyboards_
+    return keyboard
 
 
 def change_pars_county_sale_kb(regions: list, country: dict, regions_name: dict):

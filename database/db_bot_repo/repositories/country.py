@@ -7,8 +7,9 @@ class CountryRepository:
 
     async def get_all_county_pars(self, ):
         async with self.db.get_session() as conn:
-            cursor = conn.execute('SELECT * FROM country')
-            row = cursor.fetchall()[0]
+            cursor = await conn.execute('SELECT * FROM country')
+            row = await cursor.fetchall()
+            row = row[0]
             return {
                 "IN": row[1],
                 "NG": row[2],
@@ -21,5 +22,5 @@ class CountryRepository:
     async def update_region_pars(self, region: str, status: int):
         async with self.db.get_session() as conn:
             query = f'UPDATE country SET "{region}" = ?'
-            conn.execute(query, (status,))
-            conn.commit()
+            await conn.execute(query, (status,))
+            await conn.commit()

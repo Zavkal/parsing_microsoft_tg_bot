@@ -3,12 +3,12 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 def get_data_sale_files():
     #  Здесь будет функция создания кнопок на каждый файл
-    parsing_sale_keyboards_ = InlineKeyboardMarkup(
+    kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Что-то получить в распродаже", callback_data="123")],
         ]
     )
-    return parsing_sale_keyboards_
+    return kb
 
 
 def get_data_sale_back_keyboards():

@@ -1,14 +1,18 @@
 import asyncio
+import logging
+import re
 import time
 from datetime import datetime, timedelta
 import pytz
 
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.keyboards.base_menu_keyboards import del_msg_kb
 from bot.keyboards.parsing_sale_keyboards import parsing_sale_keyboards, back_parsing_sale_keyboards, \
-    stop_parser_sale_keyboards, change_pars_county_sale_kb
+    stop_parser_sale_keyboards, change_pars_county_sale_kb, parsing_sale_settings_kb
 from config import regions, regions_name, regions_id
 from database.db_bot import DataBase
 from database.db_bot_repo.repositories.config import ConfigRepository
@@ -23,8 +27,12 @@ router = Router(name="Парсинг распродажи")
 moscow_tz = pytz.timezone("Europe/Moscow")
 
 
+class NewLinkForPars(StatesGroup):
+    new_link = State()
+
+
 @router.callback_query(F.data == "parsing_sale")
-async def parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
     await state.clear()
     repo_country = CountryRepository(db)
     country = await repo_country.get_all_county_pars()
@@ -40,14 +48,15 @@ async def parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, 
 async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
     await state.clear()
     await callback_query.message.edit_text(
-        "Парсер запущен",
+        "✅ Парсер запущен",
         reply_markup=stop_parser_sale_keyboards()
     )
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
-                                          text='✅Парсинг запущен.')
+                                          text='✅ Парсер запущен.')
     start_time = time.time()
     sale_links = []
     links = await pars_link_for_auto_pars()
+    links.append() # ВАЖНО добавить ссылку из ручного парса если есть (Придумай логику)
     if len(links) > 0:
         text_response = f"⛓️‍💥 Найдено распродаж: {len(links)} ✅\n" + "\n".join(links)
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -76,6 +85,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
                 continue  # Пропускаем регионы, которые не нужно парсить
 
             exception_text = "\n".join(exception)
+            logging.error(exception_text)
 
             await callback_query.bot.send_message(
                 chat_id=callback_query.from_user.id,
@@ -91,7 +101,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
                                               text=f'Работа завершена ✅\n'
                                                    f'📅 Дата: {datetime.now(moscow_tz).strftime("%d-%m-%Y")}\n'
                                                    f'⌛️ Время: {datetime.now(moscow_tz).strftime("%H:%M")}\n'
-                                                   f'⏰ Время парсинга: {str(timedelta(seconds=elapsed_time))[:-3]}')
+                                                   f'⏰ Время парсинга: {str(timedelta(seconds=elapsed_time))[:-3]} ЧЧ:ММ')
     else:
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'Было найдено ровно 0 ссылок с распродажей :(')
@@ -113,16 +123,30 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
 
 @router.callback_query(F.data.startswith("change_pars_country:"))
 async def toggle_region_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
-    region = callback.data.split(":")[1]  # Получаем регион из callback_data
+    region = callback.data.split(":")[1]
     repo_country = CountryRepository(db)
     country = await repo_country.get_all_county_pars()
 
     # Инвертируем статус региона
     new_status = not country.get(region, 0)
     await repo_country.update_region_pars(region, new_status)
+    country = await repo_country.get_all_county_pars()
 
     keyboard = change_pars_county_sale_kb(country=country, regions_name=regions_name, regions=regions)
     await callback.message.edit_text("Выберите регионы:", reply_markup=keyboard)
+
+
+@router.callback_query(F.data.startswith("settings_pars_sale"))
+async def settings_pars_sale(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+    repo_country = CountryRepository(db)
+    country = await repo_country.get_all_county_pars()
+    text = "Регионы для копирования цен:\n"
+    for region in regions:
+        if country.get(region):
+            text += regions_name.get(region) + "\n"
+    text+='\n\nСсылки:\n'
+    await callback.message.edit_text(text=text,
+                                     reply_markup=parsing_sale_settings_kb())
 
 
 async def stop_parser_sale_products():
@@ -130,10 +154,37 @@ async def stop_parser_sale_products():
 
 
 @router.callback_query(F.data == "stop_parser_sale")
-async def stop_parser(callback_query: types.CallbackQuery):
+async def stop_parser(callback_query: types.CallbackQuery) -> None:
     await stop_parser_sale_products()
     await callback_query.message.edit_text(
         "Парсер остановлен",
         reply_markup=parsing_sale_keyboards())
+
+
+@router.callback_query(F.data == "add_link_for_pars")
+async def add_link_for_pars(callback: types.CallbackQuery, state: FSMContext) -> None:
+    call_del = await callback.message.answer(text='Введите ссылку с распродажами!')
+    await state.update_data(call_del=call_del)
+    await state.set_state(NewLinkForPars.new_link)
+
+
+@router.message(NewLinkForPars.new_link)
+async def add_link_for_pars_(message: types.Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    call_del = data.get("call_del")
+    link = message.text.strip()
+    await message.delete()
+    URL_REGEX = re.compile(
+        r'^(https?://)?(www\.)?([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}(/[\w\-._~:/?#[\]@!$&\'()*+,;=]*)?$'
+    )
+    if URL_REGEX.match(link):
+        await call_del.edit_text(text=f"✅ Ссылка принята:\n{link}",
+                                 reply_markup=del_msg_kb())
+        await state.clear()
+    else:
+        msg_del = await message.answer("❌ Пожалуйста, введите корректную ссылку.")
+        await asyncio.sleep(2)
+        await msg_del.delete()
+
 
 
