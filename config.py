@@ -1,6 +1,7 @@
 import logging
 import pytz
 
+from entities.parser_entity import ParserName
 
 # Указываем часовой пояс Москвы
 moscow_tz = pytz.timezone("Europe/Moscow")
@@ -43,21 +44,21 @@ product_pass = {
 
 DEFAULT_SCHEDULES = [
     {
-        "parser_name": "sale",
+        "parser_name": ParserName.SALE,
         "frequency": "weekly",
         "day_of_week": "monday",
         "day_of_month": None,
         "time": "10:30"
     },
     {
-        "parser_name": "products",
+        "parser_name": ParserName.BIG_PARSER,
         "frequency": "weekly",
         "day_of_week": "friday",
         "day_of_month": None,
         "time": "11:00"
     },
     {
-        "parser_name": "new_products",
+        "parser_name": ParserName.PARS_PRICE,
         "frequency": "monthly",
         "day_of_week": None,
         "day_of_month": 1,
@@ -66,9 +67,29 @@ DEFAULT_SCHEDULES = [
 ]
 
 parsing_name = {
-    "sale": "Распродажи",
+    "sale_products": "Распродажи",
     "products": "Биг парсер",
-    "new_products": "Новые товары"}
+    "price_products": "Цены"}
 
 
+DAYS_OF_WEEK_RU = {
+    "monday": "Понедельник",
+    "tuesday": "Вторник",
+    "wednesday": "Среда",
+    "thursday": "Четверг",
+    "friday": "Пятница",
+    "saturday": "Суббота",
+    "sunday": "Воскресенье"
+}
+
+FREQUENCY_RU = {
+    "daily": "Ежедневно",
+    "weekly": "Еженедельно",
+    "monthly": "Ежемесячно"
+}
+
+
+
+
+link = 'https://www.xbox.com/en-US/games/browse/game-deals'
 logging.basicConfig(level=logging.INFO)

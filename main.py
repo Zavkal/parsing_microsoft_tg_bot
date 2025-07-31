@@ -29,8 +29,6 @@ async def main() -> None:
         big_parser,
 
     )
-    # dp.callback_query.middleware(AuthorizationMiddleware())
-    # dp.message.middleware(AuthorizationMiddleware())
     await dp.start_polling(bot, skip_updates=True)
 
 

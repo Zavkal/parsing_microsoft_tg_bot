@@ -12,8 +12,10 @@ from bot.keyboards.pars_price_product_keyboards import parsing_price_keyboards, 
 from config import moscow_tz, regions, regions_name, regions_id
 from database.db import get_url_products
 from database.db_bot import DataBase
-from database.db_bot_repo.repositories.config import ConfigRepository
 from database.db_bot_repo.repositories.country_price import CountyPriceRepository
+from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from entities.parser_entity import ParserName
+from operations.last_pars import get_last_pars
 from operations.parsing_price_products import pars_price
 from operations.start_big_parser import start_big_parser_products
 
@@ -22,17 +24,17 @@ router = Router(name="Управление большим парсером")
 
 @router.callback_query(F.data == "big_parser_products_menu")
 async def products_menu(callback_query: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
-    repo_conf = ConfigRepository(db)
-    last_pars_date = await repo_conf.get_config()
+    repo_conf = ParserScheduleRepository(db)
+    _, products, _ = await get_last_pars(repo_conf=repo_conf)
     await callback_query.message.edit_text(
-        f"Парсинг был {last_pars_date['last_date_pars_products']}",
+        f"Парсинг был {products}",
         reply_markup=products_menu_keyboards()
     )
 
 
 @router.callback_query(F.data == "start_big_parsing")
 async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> None:
-    repo_conf = ConfigRepository(db)
+    repo_conf = ParserScheduleRepository(db)
     await callback_query.message.edit_text(
         "Парсер запущен",
         reply_markup=stop_parser_keyboards()
@@ -42,7 +44,7 @@ async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> Non
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text=f"Большой парсер окончил работу!")
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")
-    await repo_conf.update_date_pars(pars_tag="last_date_pars_products", date=date)
+    await repo_conf.update_last_run(parser_name=ParserName.BIG_PARSER, date=date)
 
 
 async def stop_big_parser_products():

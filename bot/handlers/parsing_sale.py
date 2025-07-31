@@ -8,15 +8,15 @@ import pytz
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.keyboards.base_menu_keyboards import del_msg_kb
-from bot.keyboards.parsing_sale_keyboards import parsing_sale_keyboards, back_parsing_sale_keyboards, \
-    stop_parser_sale_keyboards, change_pars_county_sale_kb, parsing_sale_settings_kb
+from bot.keyboards.parsing_sale_keyboards import (parsing_sale_keyboards,
+    stop_parser_sale_keyboards, change_pars_county_sale_kb, parsing_sale_settings_kb)
 from config import regions, regions_name, regions_id
 from database.db_bot import DataBase
-from database.db_bot_repo.repositories.config import ConfigRepository
 from database.db_bot_repo.repositories.country import CountryRepository
+from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from entities.parser_entity import ParserName
 
 from operations.parsing_links import open_page_and_scroll
 from operations.parsing_links_for_auto_pars import pars_link_for_auto_pars
@@ -107,8 +107,8 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
                                               text=f'Было найдено ровно 0 ссылок с распродажей :(')
 
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")
-    repo_conf = ConfigRepository(db)
-    await repo_conf.update_date_pars(pars_tag="last_date_pars_sale", date=date)
+    repo_conf = ParserScheduleRepository(db)
+    await repo_conf.update_last_run(parser_name=ParserName.SALE, date=date)
 
 
 @router.callback_query(F.data == "change_pars_regions")
