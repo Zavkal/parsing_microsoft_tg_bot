@@ -7,7 +7,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from bot.keyboards.auto_parsing_keyboards import auto_parsing_kb, \
     generate_parser_settings_keyboard, generate_frequency_keyboard, generate_day_of_week_keyboard, \
-    generate_day_of_month_keyboard, back_auto_parsing_kb
+    generate_day_of_month_keyboard, back_auto_parsing_kb, change_status_auto_pars_kb
 from config import parsing_name
 from database.db_bot import DataBase
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
@@ -22,8 +22,8 @@ class TimeInput(StatesGroup):
 @router.callback_query(F.data == "base_auto_parsing")
 async def base_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase):
     await state.clear()
-    repo_conf = ParserScheduleRepository(db)
-    text = await generate_text_auto_pars(repo_conf)
+    repo = ParserScheduleRepository(db)
+    text = await generate_text_auto_pars(repo)
 
     await callback_query.message.edit_text(text=text,
                                            reply_markup=auto_parsing_kb(),
@@ -32,8 +32,8 @@ async def base_auto_parsing(callback_query: types.CallbackQuery, state: FSMConte
 
 @router.callback_query(F.data == "settings_auto_parsing")
 async def settings_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase):
-    repo_conf = ParserScheduleRepository(db)
-    conf_pars = await repo_conf.get_all_schedule_conditions()
+    repo = ParserScheduleRepository(db)
+    conf_pars = await repo.get_all_schedule_conditions()
     keyboard = []
     for parser in conf_pars.keys():
         data = conf_pars[parser]
@@ -182,5 +182,27 @@ async def set_monthday(callback: types.CallbackQuery, db: DataBase):
     )
 
 
+@router.callback_query(F.data == "change_status_auto_pars")
+async def change_status_auto_pars(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+    await state.clear()
+    repo = ParserScheduleRepository(db)
+    conf_repo = await repo.get_all_schedule_conditions()
+
+    await callback_query.message.edit_text(text="Управление парсерами:",
+                                           reply_markup=change_status_auto_pars_kb(conf_pars=conf_repo))
 
 
+@router.callback_query(F.data.startswith("change_pars_status:"))
+async def change_pars_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+    parser_name = callback.data.split(":")[1]
+    repo = ParserScheduleRepository(db)
+    conf_repo = await repo.get_all_schedule_conditions()
+
+    # Инвертируем статус региона
+    new_status = not conf_repo.get(parser_name)[0].get('is_enabled', 0)
+    await repo.update_status_pars(parser_name=parser_name,
+                                  is_enabled=new_status)
+    conf_repo = await repo.get_all_schedule_conditions()
+
+    await callback.message.edit_text(text="Управление парсерами:",
+                                     reply_markup=change_status_auto_pars_kb(conf_pars=conf_repo))

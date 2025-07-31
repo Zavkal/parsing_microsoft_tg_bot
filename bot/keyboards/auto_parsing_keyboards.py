@@ -8,8 +8,8 @@ def auto_parsing_kb():
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="⚙️ Настройка авто парсинга", callback_data="settings_auto_parsing")],
-            [InlineKeyboardButton(text="✅Вкл/❌Выкл", callback_data="2")],
-            [InlineKeyboardButton(text="⏪ Назад", callback_data="base_auto_parsing")],
+            [InlineKeyboardButton(text="✅Вкл/❌Выкл", callback_data="change_status_auto_pars")],
+            [InlineKeyboardButton(text="⏪ Назад", callback_data="back_base_menu_keyboards")],
         ]
     )
     return keyboard
@@ -89,3 +89,25 @@ def generate_day_of_month_keyboard(parser_name: str) -> InlineKeyboardMarkup:
     builder.adjust(7)  # по 7 кнопок в ряд
     builder.button(text="🔙 Назад", callback_data=f"settings_auto_parsing_edit:{parser_name}")
     return builder.as_markup()
+
+
+def change_status_auto_pars_kb(conf_pars: dict[str, list[dict]]) -> InlineKeyboardMarkup:
+    keyboard = []
+    for parser in conf_pars.keys():
+        data = conf_pars[parser]
+        parser_name = data[0]['parser_name']
+        if data[0].get('is_enabled'):
+            keyboard.append([InlineKeyboardButton(
+                text=f"✅ {parser_name}",
+                callback_data=f"change_pars_status:{parser_name}")])
+        else:
+            keyboard.append([InlineKeyboardButton(
+                text=f"❌ {parser_name}",
+                callback_data=f"change_pars_status:{parser_name}")])
+
+
+    keyboard.extend(back_auto_parsing_kb().inline_keyboard)
+    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+    return keyboard

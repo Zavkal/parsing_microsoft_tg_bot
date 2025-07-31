@@ -15,6 +15,15 @@ class ParserScheduleRepository:
             await conn.commit()
 
 
+    async def update_status_pars(self, parser_name: str, is_enabled: bool) -> None:
+        async with self.db.get_session() as conn:
+            await conn.execute(
+                "UPDATE parser_schedule SET is_enabled = ? WHERE parser_name = ?",
+                (is_enabled, parser_name)
+            )
+            await conn.commit()
+
+
     async def get_enabled_schedules(self) -> list[dict]:
         async with self.db.get_session() as conn:
             cursor = await conn.execute(
