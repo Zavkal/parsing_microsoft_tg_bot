@@ -1,6 +1,6 @@
 from database.db import get_game_by_id, update_price_product, update_end_date_sale_product, update_is_sale_product
-from operations.calculate import calculate_price
-from operations.parsing_products_for_links import pars_product_links
+from service.calculate import calculate_price
+from service.parsing_products_from_links import pars_product_links
 import asyncio
 import json
 import re

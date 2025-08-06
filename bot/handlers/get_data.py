@@ -4,7 +4,7 @@ from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 
-from operations.save_data import save_data_in_list
+from service.save_data import save_data_in_list
 
 router = Router(name="Кнопки получения файлов")
 

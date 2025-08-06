@@ -11,7 +11,7 @@ from bot.keyboards.auto_parsing_keyboards import auto_parsing_kb, \
 from config import parsing_name
 from database.db_bot import DataBase
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
-from operations.generate_text_auto_pars import generate_text_auto_pars
+from service.generate_text_auto_pars import generate_text_auto_pars
 
 router = Router(name="Автопарсинг")
 

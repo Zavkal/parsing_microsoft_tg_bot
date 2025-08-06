@@ -15,9 +15,9 @@ from database.db_bot import DataBase
 from database.db_bot_repo.repositories.country_price import CountyPriceRepository
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
 from entities.parser_entity import ParserName
-from operations.last_pars import get_last_pars
-from operations.parsing_price_products import pars_price
-from operations.start_big_parser import start_big_parser_products
+from service.last_pars import get_last_pars
+from service.parsing_price_products import pars_price
+from service.start_big_parser import start_big_parser_products
 
 router = Router(name="Управление большим парсером")
 

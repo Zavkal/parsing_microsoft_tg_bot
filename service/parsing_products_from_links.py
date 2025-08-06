@@ -1,15 +1,19 @@
+import logging
+
 import requests
 import json
 import re
 
 from aiogram import types
 
+from config import DEVICE_MAPPING
 from database.db import add_product
+from entities.parser_data_entity import ProductDataEntity
 
 
-async def pars_product_links(links: list, country: str, callback: types.CallbackQuery = None, pars_sale: bool = False) -> None:
+async def pars_product_links(links: list, country: str, callback: types.CallbackQuery = None,
+                             pars_sale: bool = False) -> None:
     counter = 0
-
     for link in links:
         counter += 1
         if counter % 1000 == 0:
@@ -21,6 +25,11 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
             # Отправляем GET-запрос
             response = requests.get(link)
             product_id = link.split('/')[-2]
+            all_data = ProductDataEntity(
+                product_id=product_id,
+                url_product=link.replace(link.split('/')[3], 'eu-EN'),
+                sale_product=pars_sale,
+            )
 
             # Проверяем, успешен ли запрос
             if response.status_code == 404:
@@ -39,30 +48,29 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
                         product_summary = preloaded_state_data['core2']['products']['productSummaries'][f'{product_id}']
                         try:
                             product_dlc = preloaded_state_data['core2']['channels']['channelData'][f'WORKSWITH_{product_id}']['data']['products'][0]['productId']
-                        except Exception as e:
+                        except Exception as e: #noqa
                             product_dlc = ""
-
+                        all_data.dlc = product_dlc
                         # Проверка языковой поддержки
                         languages_supported = product_summary.get('languagesSupported', {}).get('ru-RU', {})
-                        audio_ru = languages_supported.get('isAudioSupported', False)
-                        interface_ru = languages_supported.get('isInterfaceSupported', False)
-                        subtitles_ru = languages_supported.get('areSubtitlesSupported', False)
+                        all_data.audio_ru = languages_supported.get('isAudioSupported', False)
+                        all_data.interface_ru = languages_supported.get('isInterfaceSupported', False)
+                        all_data.subtitles_ru = languages_supported.get('areSubtitlesSupported', False)
 
                         # Название игры
-                        game_name = product_summary.get('title')
+                        all_data.game_name = product_summary.get('title')
 
                         # Видео
                         cms_videos = product_summary.get('cmsVideos')
-                        link_video = cms_videos[0]['url'] if cms_videos else None
+                        all_data.link_video = cms_videos[0]['url'] if cms_videos else None
 
                         # Скриншоты
                         link_screenshot = product_summary.get('images', {}).get('screenshots', [])
                         # Извлекаем только URL-адреса из списка словарей
-                        link_screenshot_str = ','.join(
+                        all_data.link_screenshot = ','.join(
                             item['url'] for item in link_screenshot if isinstance(item, dict) and 'url' in item)
 
-                        image_url = product_summary.get('images', {}).get('boxArt', {}).get('url')
-
+                        all_data.image_url = product_summary.get('images', {}).get('boxArt', {}).get('url')
 
                         # Описание
                         description = product_summary.get('description')
@@ -71,44 +79,53 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
                             description = description.replace('\u202F', ' ')
                         else:
                             description = None
+                        all_data.description = description
 
+                        # Краткое описание
                         short_description = product_summary.get('shortDescription')
                         if isinstance(short_description, str):
                             short_description = short_description.replace('\u00A0', ' ')
                             short_description = short_description.replace('\u202F', ' ')
                         else:
                             short_description = None
+                        all_data.short_description = short_description
 
                         # Разработчик и издатель
-                        developer_name = product_summary.get('developerName')
-                        publisher_name = product_summary.get('publisherName')
+                        all_data.developer_name = product_summary.get('developerName')
+                        all_data.publisher_name = product_summary.get('publisherName')
 
                         # Категории и возможности
-                        category = ','.join(product_summary.get('categories'))
+                        all_data.category = ','.join(product_summary.get('categories'))
                         capabilities = product_summary.get('capabilities')
                         if capabilities:
                             for item in capabilities:
                                 capabilities_list.append(capabilities[item])
-                        capabilities_list = ','.join(capabilities_list)
+                        all_data.capabilities_list = ','.join(capabilities_list)
 
+                        # Совместимость девайсов
                         try:
-                            # Совместимость девайсов
-                            device = ','.join(product_summary.get('availableOn'))
-                        except Exception as e:
-                            resp = requests.get(link.replace(link.split('/')[3], 'eu-EN'))
-                            match = re.search(pattern, resp.text, re.DOTALL)
-                            preloaded_state = match.group(1)
-                            preloaded_state_data = json.loads(preloaded_state)
+                            raw_devices = product_summary.get('availableOn', [])
+                            device = ', '.join(DEVICE_MAPPING.get(d, d) for d in raw_devices)
+                        except Exception as e:  # noqa
                             try:
-                                device = ','.join(preloaded_state_data['core2']['products']['productSummaries'][f'{product_id}'].get('availableOn'))
-                            except:
+                                resp = requests.get(link.replace(link.split('/')[3], 'eu-EN'))
+                                match = re.search(pattern, resp.text, re.DOTALL)
+                                preloaded_state = match.group(1)
+                                preloaded_state_data = json.loads(preloaded_state)
+
+                                raw_devices = preloaded_state_data['core2']['products']['productSummaries'][
+                                    product_id].get('availableOn', [])
+                                device = ', '.join(DEVICE_MAPPING.get(d, d) for d in raw_devices)
+                            except Exception as e:  # noqa
                                 device = None
+                        all_data.device = device
+
                         # Релиз
-                        release_date = product_summary.get('releaseDate')
+                        all_data.release_date = product_summary.get('releaseDate')
 
                         # Подписки и вес игры
-                        pass_product_id = ','.join(product_summary.get('includedWithPassesProductIds'))
-                        game_weight = product_summary.get('maxInstallSize')
+                        all_data.pass_product_id = ','.join(product_summary.get('includedWithPassesProductIds'))
+                        all_data.game_weight = (product_summary.get('maxInstallSize') / 1024**3)
 
                         # Цены и скидки
                         specific_prices = product_summary.get('specificPrices', {}).get('purchaseable')
@@ -116,41 +133,14 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
                             end_date_sale = specific_prices[0].get('endDate')
                         else:
                             end_date_sale = None
+                        all_data.end_date_sale = end_date_sale
                         print(product_id, link.replace(link.split('/')[3], 'eu-EN'))
+
                         # Добавление продукта
-                        add_product(
-                            product_id=product_id,
-                            url_product=link.replace(link.split('/')[3], 'eu-EN'),
-                            game_name=game_name,
-                            end_date_sale=end_date_sale,
-                            description=description,
-                            short_description=short_description,
-                            developer_name=developer_name,
-                            publisher_name=publisher_name,
-                            image_url=image_url,
-                            device=device,
-                            pass_product_id=pass_product_id,
-                            release_date=release_date,
-                            capabilities=capabilities_list,
-                            category=category,
-                            link_video=link_video,
-                            link_screenshot=link_screenshot_str,
-                            game_weight=game_weight,
-                            audio_ru=audio_ru,
-                            interface_ru=interface_ru,
-                            subtitles_ru=subtitles_ru,
-                            dlc=product_dlc,
-                            sale_product=pars_sale
-                        )
-                        # print(f'Найдена игра {game_name}')
+                        add_product(all_data)
                     except json.JSONDecodeError:
-                        print(f"Ошибка парсинга JSON для продукта {product_id}")
+                        logging.error(f"Ошибка парсинга JSON для продукта {product_id}")
                 else:
-                    print(f"Не удалось найти __PRELOADED_STATE__ в {link}")
+                    logging.error(f"Не удалось найти __PRELOADED_STATE__ в {link}")
         except Exception as e:
-            print(f"Ошибка при обработке {link}: {e}")
-
-
-
-
-
+            logging.error(f"Ошибка при обработке {link}: {e}")

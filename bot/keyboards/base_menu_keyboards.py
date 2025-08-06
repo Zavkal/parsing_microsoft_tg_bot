@@ -21,4 +21,12 @@ def del_msg_kb():
     )
     return kb
 
+def cancel_msg_kb():
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🗑 Отменить", callback_data="del_message")],
+        ]
+    )
+    return kb
+
 

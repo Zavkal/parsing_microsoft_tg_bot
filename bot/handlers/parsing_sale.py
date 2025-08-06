@@ -9,18 +9,19 @@ from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
-from bot.keyboards.base_menu_keyboards import del_msg_kb
+from bot.keyboards.base_menu_keyboards import del_msg_kb, cancel_msg_kb
 from bot.keyboards.parsing_sale_keyboards import (parsing_sale_keyboards,
-    stop_parser_sale_keyboards, change_pars_county_sale_kb, parsing_sale_settings_kb)
+                                                  stop_parser_sale_keyboards, change_pars_county_sale_kb,
+                                                  parsing_sale_settings_kb)
 from config import regions, regions_name, regions_id
 from database.db_bot import DataBase
 from database.db_bot_repo.repositories.country import CountryRepository
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
 from entities.parser_entity import ParserName
 
-from operations.parsing_links import open_page_and_scroll
-from operations.parsing_links_for_auto_pars import pars_link_for_auto_pars
-from operations.parsing_price_products import pars_price
+from service.parsing_links import open_page_and_scroll
+from service.parsing_links_for_auto_pars import pars_link_for_auto_pars
+from service.parsing_price_products import pars_price
 
 router = Router(name="Парсинг распродажи")
 
@@ -41,7 +42,7 @@ async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMCo
         if country.get(region):
             region_text += regions_name.get(region) + "\n"
     await callback_query.message.edit_text(text=region_text,
-                                              reply_markup=parsing_sale_keyboards())
+                                           reply_markup=parsing_sale_keyboards())
 
 
 @router.callback_query(F.data == "start_parsing_sale")
@@ -56,7 +57,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
     start_time = time.time()
     sale_links = []
     links = await pars_link_for_auto_pars()
-    links.append() # ВАЖНО добавить ссылку из ручного парса если есть (Придумай логику)
+    links.append()  # ВАЖНО добавить ссылку из ручного парса если есть (Придумай логику)
     if len(links) > 0:
         text_response = f"⛓️‍💥 Найдено распродаж: {len(links)} ✅\n" + "\n".join(links)
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -144,7 +145,7 @@ async def settings_pars_sale(callback: types.CallbackQuery, db: DataBase, state:
     for region in regions:
         if country.get(region):
             text += regions_name.get(region) + "\n"
-    text+='\n\nСсылки:\n'
+    text += '\n\nСсылки:\n'
     await callback.message.edit_text(text=text,
                                      reply_markup=parsing_sale_settings_kb())
 
@@ -163,7 +164,10 @@ async def stop_parser(callback_query: types.CallbackQuery) -> None:
 
 @router.callback_query(F.data == "add_link_for_pars")
 async def add_link_for_pars(callback: types.CallbackQuery, state: FSMContext) -> None:
-    call_del = await callback.message.answer(text='Введите ссылку с распродажами!')
+    await callback.answer()
+    call_del = await callback.message.answer(
+        text='Введите ссылку с распродажами!',
+        reply_markup=cancel_msg_kb())
     await state.update_data(call_del=call_del)
     await state.set_state(NewLinkForPars.new_link)
 
@@ -185,6 +189,3 @@ async def add_link_for_pars_(message: types.Message, state: FSMContext) -> None:
         msg_del = await message.answer("❌ Пожалуйста, введите корректную ссылку.")
         await asyncio.sleep(2)
         await msg_del.delete()
-
-
-

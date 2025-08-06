@@ -27,6 +27,13 @@ regions_name = {
     }
 
 
+DEVICE_MAPPING = {
+    "XboxOne": "Xbox One",
+    "XboxSeriesX": "Xbox Series X|S",
+}
+
+
+
 main_game_list = [
     'https://www.xbox.com/eu-EN/games/browse?orderby=Title+Desc',
     'https://www.xbox.com/eu-EN/games/browse?orderby=Title+Asc'

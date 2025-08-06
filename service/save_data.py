@@ -1,5 +1,5 @@
 from database.db import get_all_sale_product, get_prices_by_product, get_game_by_id, save_all_ru_price
-from operations.calculate import calculate_price
+from service.calculate import calculate_price
 
 
 async def save_data_in_list(sort_by=True):

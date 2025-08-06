@@ -1,7 +1,7 @@
 from aiogram import types
 
-from operations.parsing_links import open_page_and_scroll
-from operations.parsing_products_for_links import pars_product_links
+from service.parsing_links import open_page_and_scroll
+from service.parsing_products_from_links import pars_product_links
 
 
 async def start_big_parser_products(callback: types.CallbackQuery):

@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from config import regions_id
+from entities.parser_data_entity import ProductDataEntity
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -147,44 +148,22 @@ def start_db():
     conn.commit()
 
 
-def add_product(
-        product_id: str,
-        url_product: str,
-        game_name: str = None,
-        end_date_sale: str = None,
-        device: str = None,
-        description: str = None,
-        short_description: str = None,
-        developer_name: str = None,
-        publisher_name: str = None,
-        image_url: str = None,
-        pass_product_id: str = None,
-        release_date: str = None,
-        capabilities: str = None,
-        category: str = None,
-        link_video: str = None,
-        link_screenshot: str = None,
-        game_weight: str = None,
-        audio_ru: bool = False,
-        interface_ru: bool = False,
-        subtitles_ru: bool = False,
-        sale_product: bool = False,
-        dlc: str = None
-
-):
-    cur.execute("SELECT COUNT(*) FROM products WHERE product_id = ?", (product_id,))
+def add_product(data: ProductDataEntity):
+    cur.execute("SELECT COUNT(*) FROM products WHERE product_id = ?", (data.product_id,))
     exists = cur.fetchone()[0] > 0
 
     if not exists:
         # Если записи нет, создаем новую
         cur.execute(
-            '''INSERT INTO products (product_id, url_product, game_name, end_date_sale, device, description, short_description,
-            developer_name, publisher_name, image_url, pass_product_id, release_date, capabilities, category, link_video, link_screenshot,
-             game_weight, audio_ru, interface_ru, subtitles_ru, sale_product, dlc) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (product_id, url_product, game_name, end_date_sale, device, description, short_description,
-             developer_name, publisher_name, image_url, pass_product_id, release_date, capabilities, category,
-             link_video, link_screenshot, game_weight, audio_ru, interface_ru, subtitles_ru, sale_product, dlc)
+            '''INSERT INTO products (product_id, url_product, game_name, end_date_sale, device, description,
+                                     short_description,
+                                     developer_name, publisher_name, image_url, pass_product_id, release_date,
+                                     capabilities, category, link_video, link_screenshot,
+                                     game_weight, audio_ru, interface_ru, subtitles_ru, sale_product, dlc)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (data.product_id, data.url_product, data.game_name, data.end_date_sale, data.device, data.description, data.short_description,
+             data.developer_name, data.publisher_name, data.image_url, data.pass_product_id, data.release_date, data.capabilities, data.category,
+             data.link_video, data.link_screenshot, data.game_weight, data.audio_ru, data.interface_ru, data.subtitles_ru, data.sale_product, data.dlc)
         )
 
     else:
