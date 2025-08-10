@@ -1,21 +1,32 @@
 from sqlalchemy import select
 
-from database.db_repo.models.product_model import Product
+from database.db import DataBase
+from database.db_repo.models.product import Product
 
 
 class ProductRepository:
-    def __init__(self, session):
-        self.session = session
+
+    def __init__(self, db: DataBase):
+        self.db = db
+
 
     async def get_by_product_id(self, product_id: str):
-        stmt = select(Product).where(Product.product_id == product_id)
-        result = await self.session.execute(stmt)
-        return result.scalars().first()
+        async with self.db.get_session() as session:
+            stmt = select(Product).where(Product.product_id == product_id)
+            result = await session.execute(stmt)
+            return result.scalars().first()
+
 
     async def add(self, product: Product):
-        self.session.add(product)
+        async with self.db.get_session() as session:
+            await session.add(product)
 
-    async def update_audio(self, product_id: str, audio: bool):
-        product = await self.get_by_product_id(product_id)
-        if product:
-            product.audio_ru = audio
+
+    async def get_url_products(self) -> list[str]:
+        async with self.db.get_session() as session:
+            stmt = select(Product.url_product)
+            result = await session.execute(stmt)
+            return [row[0] for row in result.all()]
+
+
+

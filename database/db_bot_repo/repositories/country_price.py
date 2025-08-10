@@ -1,4 +1,7 @@
+from sqlalchemy import select, update
+
 from database.db_bot import DataBase
+from database.db_bot_repo.models.country_price import CountryPrice
 
 
 class CountyPriceRepository:
@@ -8,22 +11,21 @@ class CountyPriceRepository:
 
 
     async def get_all_county_pars_product(self, ) -> dict:
-        async with self.db.get_session() as conn:
-            cursor = await conn.execute('SELECT * FROM country_price')
-            row = await cursor.fetchone()
+        async with self.db.get_session() as session:
+            stmt = select(CountryPrice)
+            result = await session.execute(stmt)
+            row = result.scalar_one()
             return {
-                "IN": row[1],
-                "NG": row[2],
-                "US": row[3],
-                "AR": row[4],
-                "TR": row[5],
-                "UA": row[6],
+                "IN": row.IN,
+                "NG": row.NG,
+                "US": row.US,
+                "AR": row.AR,
+                "TR": row.TR,
+                "UA": row.UA,
         }
 
 
     async def update_region_pars_product(self, region: str, status: int):
-        async with self.db.get_session() as conn:
-            # Используем параметризованный запрос для безопасности
-            query = f'UPDATE country_price SET "{region}" = ? WHERE id = 1'
-            await conn.execute(query, (status,))
-            await conn.commit()
+        async with self.db.get_session() as session:
+            stmt = update(CountryPrice).values({region: status})
+            await session.execute(stmt)

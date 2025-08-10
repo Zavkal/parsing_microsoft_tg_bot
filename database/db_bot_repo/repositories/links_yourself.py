@@ -1,4 +1,7 @@
+from sqlalchemy import select
+
 from database.db_bot import DataBase
+from database.db_bot_repo.models.links_yourself import LinkYourself
 
 
 class LinksYourselfRepository:
@@ -7,25 +10,17 @@ class LinksYourselfRepository:
         self.db = db
 
     async def get_all_links_yourself(self, ) -> list:
-        async with self.db.get_session() as conn:
-            cursor = await conn.execute('SELECT * FROM links_yourself')
-            rows = await cursor.fetchall()
-            return [row[0] for row in rows]
+        async with self.db.get_session() as session:
+            stmt = select(LinkYourself.url)
+            result = session.execute(stmt).scalars().all()
+            return [link for link in result]
 
 
-    async def create_new_link_yourself(self, url: str) -> None:
-        async with self.db.get_session() as conn:
-            await conn.execute(
-                "INSERT INTO links_yourself SET url = ?",
-                (url,)
-            )
-            await conn.commit()
+    async def create_new_link_yourself(self, url: LinkYourself) -> None:
+        async with self.db.get_session() as session:
+            session.add(url)
 
 
-    async def delete_links_yourself(self, url: str) -> None:
-        async with self.db.get_session() as conn:
-            cursor = await conn.execute(
-                'DELETE FROM links_yourself WHERE url = ?',
-                (url,)
-            )
-            await conn.commit()
+    async def delete_links_yourself(self, url: LinkYourself) -> None:
+        async with self.db.get_session() as session:
+            session.delete(url.url)

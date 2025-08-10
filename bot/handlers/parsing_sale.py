@@ -37,7 +37,7 @@ class NewLinkForPars(StatesGroup):
 async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
     await state.clear()
     repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars()
+    country = await repo_country.get_all_county_pars_sale()
     region_text = "Регионы для копирования цен:\n"
     for region in regions:
         if country.get(region):
@@ -67,7 +67,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
         all_links_products = await open_page_and_scroll(links)
         sale_links += all_links_products
         repo_country = CountryRepository(db)
-        country = await repo_country.get_all_county_pars()
+        country = await repo_country.get_all_county_pars_sale()
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'⛓️‍💥 Найдено ссылок на игры: {len(sale_links)} ✅')
         regions_to_parse = [region for region in regions if country.get(region)]
@@ -122,7 +122,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
 async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
     await state.clear()
     repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars()
+    country = await repo_country.get_all_county_pars_sale()
 
     keyboard = change_pars_county_sale_kb(country=country, regions_name=regions_name, regions=regions)
     await callback_query.message.edit_text("Регионы для копирования цен:", reply_markup=keyboard)
@@ -132,12 +132,12 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
 async def toggle_region_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
     region = callback.data.split(":")[1]
     repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars()
+    country = await repo_country.get_all_county_pars_sale()
 
     # Инвертируем статус региона
     new_status = not country.get(region, 0)
     await repo_country.update_region_pars(region, new_status)
-    country = await repo_country.get_all_county_pars()
+    country = await repo_country.get_all_county_pars_sale()
 
     keyboard = change_pars_county_sale_kb(country=country, regions_name=regions_name, regions=regions)
     await callback.message.edit_text("Выберите регионы:", reply_markup=keyboard)
@@ -146,7 +146,7 @@ async def toggle_region_status(callback: types.CallbackQuery, db: DataBase, stat
 @router.callback_query(F.data.startswith("settings_pars_sale"))
 async def settings_pars_sale(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
     repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars()
+    country = await repo_country.get_all_county_pars_sale()
     text = "Регионы для копирования цен:\n"
     for region in regions:
         if country.get(region):
