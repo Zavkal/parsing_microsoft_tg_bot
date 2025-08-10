@@ -1,14 +1,14 @@
-from database.db import get_all_sale_product, get_prices_by_product, get_game_by_id, save_all_ru_price
+from config_bot import repo_manager
 from service.calculate import calculate_price
 
 
 async def save_data_in_list(sort_by=True):
-    all_sale_products = get_all_sale_product()
+    all_sale_products = await repo_manager.product_repo.get_all_sale_product()
     game_entries = []  # Временный список для сортировки
 
     for product in all_sale_products:
-        game = get_game_by_id(product)
-        all_price = get_prices_by_product(product)
+        game = await repo_manager.product_repo.get_by_product_id(product_id=product.id)
+        all_price = await repo_manager.product_price_repo.get_prices_by_product(product_id=product.id)
         us_price = None
         ng_ua_prices = []
         ar_tr_prices = []

@@ -3,7 +3,11 @@ import asyncio
 from database.db import get_exchange, get_formulas, save_ru_price_by_country
 
 
-def calculate_price(country_code, original_price, discounted_price):
+def calculate_price(
+        country_code: str,
+        original_price: float,
+        discounted_price: float
+) -> tuple[float, float]:
     formula = get_formulas().get(country_code)
     exchange_rate = get_exchange()
     if original_price < 1 and discounted_price < 1:
@@ -79,7 +83,6 @@ def calculate_price(country_code, original_price, discounted_price):
     else:
         return f"error: Нет такой страны - {country_code}"
 
-
 # async def calculate_price_all_country(country_code, price):
 #
 #     _, ru_price = calculate_price(country_code, price, price)
@@ -87,5 +90,3 @@ def calculate_price(country_code, original_price, discounted_price):
 #     save_ru_price_by_country(product_id=product_id,
 #                              country_code=country_code,
 #                              ru_price=ru_price)
-
-

@@ -109,3 +109,33 @@ class ProductPriceRepository:
             )
             await session.execute(stmt)
             await session.commit()
+
+
+    def get_exchange():
+        cur.execute('SELECT * FROM exchange')
+        result = cur.fetchone()
+        if result is None:
+            return 0
+
+        # Получение имен колонок
+        columns = [desc[0] for desc in cur.description]
+
+        # Создание словаря с данными
+        exchange_rate = dict(zip(columns, result))
+
+        return exchange_rate
+
+
+    def get_formulas():
+        cur.execute('SELECT * FROM formulas')
+        result = cur.fetchone()
+        if result is None:
+            return 0
+
+        # Получение имен колонок
+        columns = [desc[0] for desc in cur.description]
+
+        # Создание словаря с данными
+        all_formulas = dict(zip(columns, result))
+
+        return all_formulas

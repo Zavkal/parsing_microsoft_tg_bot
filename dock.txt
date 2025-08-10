@@ -1,0 +1,18 @@
+docker run -d \
+  --name postgres_microsoft_parser \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=mydatabase \
+  -p 5432:5432 \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres:15
+
+
+docker run -d \
+  --name postgres_microsoft_parser_bot \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=mydatabase_bot \
+  -p 5432:5432 \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres:15

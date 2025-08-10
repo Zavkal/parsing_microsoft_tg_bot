@@ -3,19 +3,18 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
 from bot.keyboards.base_menu_keyboards import base_menu_keyboards
-from database.db_bot import DataBase
-from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from config_bot import repo_manager
 from service.last_pars import get_last_pars
 
 router = Router(name="Автопарсинг")
 
 
 @router.message(CommandStart())
-async def command_start_handler(message: types.Message, db: DataBase, state: FSMContext) -> None:
+async def command_start_handler(message: types.Message, state: FSMContext) -> None:
     await state.clear()
     await message.delete()
-    repo_conf = ParserScheduleRepository(db)
-    new_products, products, sale_products = await get_last_pars(repo_conf=repo_conf)
+
+    new_products, products, sale_products = await get_last_pars(repo_manager=repo_manager)
     await message.bot.send_message(chat_id=message.chat.id,
                                    text=f"Последний парсинг был:\n"
                                         f"Новинки {new_products}\n"
@@ -25,10 +24,9 @@ async def command_start_handler(message: types.Message, db: DataBase, state: FSM
 
 
 @router.callback_query(F.data == "back_base_menu_keyboards")
-async def command_start_handler(callback_query: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+async def command_start_handler(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    repo_conf = ParserScheduleRepository(db)
-    new_products, products, sale_products = await get_last_pars(repo_conf=repo_conf)
+    new_products, products, sale_products = await get_last_pars(repo_manager=repo_manager)
     await callback_query.message.edit_text(text=f"Последний парсинг был:\n"
                                         f"Новинки {new_products}\n"
                                         f"Распродажа {sale_products}\n"

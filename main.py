@@ -1,8 +1,6 @@
 import asyncio
 import logging
 
-# from bot.middleware.authorization import AuthorizationMiddleware
-
 from bot.handlers.base_menu import router as start_router
 from bot.handlers.sale import router as sale
 from bot.handlers.parsing_sale import router as parsing_sale
@@ -11,14 +9,8 @@ from bot.handlers.get_data import router as get_data_file
 from bot.handlers.big_parser import router as big_parser
 from config_bot import dp, bot
 
-from database.db_bot import DataBase
-from database.db import start_db as start_pars_db
-
 
 async def main() -> None:
-    db = DataBase()
-    await db.start_db()
-    start_pars_db()
     logging.info("[Запуск бота] Бот запущен ассинхронно!")
     dp.include_routers(
         start_router,

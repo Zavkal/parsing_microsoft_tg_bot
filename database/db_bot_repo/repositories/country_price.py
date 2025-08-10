@@ -4,7 +4,7 @@ from database.db_bot import DataBase
 from database.db_bot_repo.models.country_price import CountryPrice
 
 
-class CountyPriceRepository:
+class CountryPriceRepository:
 
     def __init__(self, db: DataBase):
         self.db = db

@@ -1,0 +1,22 @@
+from database.db import DataBase as DataBase_db
+from database.db_bot import DataBase as DataBase_db_bot
+from database.db_bot_repo.repositories.country import CountryRepository
+from database.db_bot_repo.repositories.country_price import CountryPriceRepository
+from database.db_bot_repo.repositories.links_yourself import LinkYourselfRepository
+from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+
+from database.db_repo.repositories.product_price_repository import ProductPriceRepository
+from database.db_repo.repositories.product_repository import ProductRepository
+
+
+class RepoManager:
+    def __init__(self, db: DataBase_db, db_bot: DataBase_db_bot):
+        # Работа с ботом
+        self.parser_schedule_repo = ParserScheduleRepository(db_bot)
+        self.country_price_repo = CountryPriceRepository(db_bot)
+        self.country_repo = CountryRepository(db_bot)
+        self.link_yourself_repo = LinkYourselfRepository(db_bot)
+
+        # Работа с продуктами
+        self.product_repo = ProductRepository(db)
+        self.product_price_repo = ProductPriceRepository(db)

@@ -19,7 +19,7 @@ class ProductDataEntity:
     category: str = None
     link_video: str = None
     link_screenshot: str = None
-    game_weight: str = None
+    game_weight: int = None
     audio_ru: bool = False
     interface_ru: bool = False
     subtitles_ru: bool = False

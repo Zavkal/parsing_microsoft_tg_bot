@@ -1,10 +1,11 @@
 from config import FREQUENCY_RU, DAYS_OF_WEEK_RU
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from database.repositories_manager import RepoManager
 from entities.parser_entity import ParserName
 
 
-async def generate_text_auto_pars(repo_conf: ParserScheduleRepository):
-    config = await repo_conf.get_all_schedule_conditions()
+async def generate_text_auto_pars(repo_manager: RepoManager):
+    config = await repo_manager.parser_schedule_repo.get_all_schedule_conditions()
     new_price = config.get(ParserName.PARS_PRICE)[0]
     big_pars = config.get(ParserName.BIG_PARSER)[0]
     sale_pars = config.get(ParserName.SALE)[0]

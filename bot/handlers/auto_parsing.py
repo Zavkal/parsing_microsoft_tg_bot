@@ -9,8 +9,7 @@ from bot.keyboards.auto_parsing_keyboards import auto_parsing_kb, \
     generate_parser_settings_keyboard, generate_frequency_keyboard, generate_day_of_week_keyboard, \
     generate_day_of_month_keyboard, back_auto_parsing_kb, change_status_auto_pars_kb
 from config import parsing_name
-from database.db_bot import DataBase
-from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from config_bot import repo_manager
 from service.generate_text_auto_pars import generate_text_auto_pars
 
 router = Router(name="Автопарсинг")
@@ -20,10 +19,9 @@ class TimeInput(StatesGroup):
 
 
 @router.callback_query(F.data == "base_auto_parsing")
-async def base_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase):
+async def base_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext ):
     await state.clear()
-    repo = ParserScheduleRepository(db)
-    text = await generate_text_auto_pars(repo)
+    text = await generate_text_auto_pars(repo_manager)
 
     await callback_query.message.edit_text(text=text,
                                            reply_markup=auto_parsing_kb(),
@@ -31,9 +29,8 @@ async def base_auto_parsing(callback_query: types.CallbackQuery, state: FSMConte
 
 
 @router.callback_query(F.data == "settings_auto_parsing")
-async def settings_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase):
-    repo = ParserScheduleRepository(db)
-    conf_pars = await repo.get_all_schedule_conditions()
+async def settings_auto_parsing(callback_query: types.CallbackQuery, state: FSMContext ):
+    conf_pars = await repo_manager.parser_schedule_repo.get_all_schedule_conditions()
     keyboard = []
     for parser in conf_pars.keys():
         data = conf_pars[parser]
@@ -50,9 +47,9 @@ async def settings_auto_parsing(callback_query: types.CallbackQuery, state: FSMC
 
 
 @router.callback_query(F.data.startswith("settings_auto_parsing_edit:"))
-async def parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase):
+async def parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext ):
     pars_name = callback_query.data.split(":")[1]
-    config = await ParserScheduleRepository(db).get_schedule_by_parser(parser_name=pars_name)
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name=pars_name)
     await state.clear()
     await callback_query.message.edit_text(text=f"⚙️ Настройка",
                                            reply_markup=generate_parser_settings_keyboard(config=config,
@@ -69,10 +66,10 @@ async def edit_frequency(callback: types.CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("edit_weekday:"))
-async def edit_weekday(callback: types.CallbackQuery, db: DataBase):
+async def edit_weekday(callback: types.CallbackQuery ):
     parser_name = callback.data.split(":")[1]
-    repo = ParserScheduleRepository(db)
-    config = await repo.get_schedule_by_parser(parser_name)
+
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name)
 
     if config['frequency'] != 'weekly':
         await callback.answer("Доступно только при еженедельном режиме.", show_alert=True)
@@ -85,10 +82,10 @@ async def edit_weekday(callback: types.CallbackQuery, db: DataBase):
 
 
 @router.callback_query(F.data.startswith("edit_monthday:"))
-async def edit_monthday(callback: types.CallbackQuery, db: DataBase):
+async def edit_monthday(callback: types.CallbackQuery ):
     parser_name = callback.data.split(":")[1]
-    repo = ParserScheduleRepository(db)
-    config = await repo.get_schedule_by_parser(parser_name)
+
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name)
 
     if config['frequency'] != 'monthly':
         await callback.answer("Доступно только при ежемесячном режиме.", show_alert=True)
@@ -109,18 +106,18 @@ async def edit_time(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(TimeInput.waiting_for_time)
-async def process_time_input(message: types.Message, state: FSMContext, db: DataBase):
+async def process_time_input(message: types.Message, state: FSMContext ):
     parser_name = (await state.get_data()).get("parser_name")
     msg_del = (await state.get_data()).get("msg_del")
-    repo = ParserScheduleRepository(db)
+
 
     if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", message.text.strip()):
         await message.answer("❌ Неверный формат. Введите время в формате HH:MM, например 08:45.")
         await message.delete()
         return
 
-    await repo.update_parser_schedule(parser_name, time=message.text.strip())
-    config = await repo.get_schedule_by_parser(parser_name=parser_name)
+    await repo_manager.parser_schedule_repo.update_parser_schedule(parser_name, time=message.text.strip())
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name=parser_name)
     await state.clear()
     await message.answer(
         f"✅ Время обновлено.",
@@ -133,9 +130,9 @@ async def process_time_input(message: types.Message, state: FSMContext, db: Data
 
 
 @router.callback_query(F.data.startswith("set_freq:"))
-async def set_frequency(callback: types.CallbackQuery, db: DataBase):
+async def set_frequency(callback: types.CallbackQuery ):
     _, parser_name, freq = callback.data.split(":")
-    repo = ParserScheduleRepository(db)
+
     updates = {"frequency": freq}
     if freq == "daily":
         updates["day_of_week"] = None
@@ -145,8 +142,8 @@ async def set_frequency(callback: types.CallbackQuery, db: DataBase):
     elif freq == "monthly":
         updates["day_of_week"] = None
 
-    await repo.update_parser_schedule(parser_name, **updates)
-    config = await repo.get_schedule_by_parser(parser_name=parser_name)
+    await repo_manager.parser_schedule_repo.update_parser_schedule(parser_name, **updates)
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name=parser_name)
     await callback.message.edit_text(
         text=f"⚙️ Настройки: {parser_name}",
         reply_markup=generate_parser_settings_keyboard(config=config,
@@ -155,12 +152,12 @@ async def set_frequency(callback: types.CallbackQuery, db: DataBase):
 
 
 @router.callback_query(F.data.startswith("set_weekday:"))
-async def set_weekday(callback: types.CallbackQuery, db: DataBase):
+async def set_weekday(callback: types.CallbackQuery ):
     _, parser_name, day = callback.data.split(":")
-    repo = ParserScheduleRepository(db)
 
-    await repo.update_parser_schedule(parser_name, day_of_week=day)
-    config = await repo.get_schedule_by_parser(parser_name=parser_name)
+
+    await repo_manager.parser_schedule_repo.update_parser_schedule(parser_name, day_of_week=day)
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name=parser_name)
     await callback.message.edit_text(
         text=f"⚙️ Настройки: {parser_name}",
         reply_markup=generate_parser_settings_keyboard(config=config,
@@ -169,12 +166,12 @@ async def set_weekday(callback: types.CallbackQuery, db: DataBase):
 
 
 @router.callback_query(F.data.startswith("set_monthday:"))
-async def set_monthday(callback: types.CallbackQuery, db: DataBase):
+async def set_monthday(callback: types.CallbackQuery):
     _, parser_name, day = callback.data.split(":")
-    repo = ParserScheduleRepository(db)
 
-    await repo.update_parser_schedule(parser_name, day_of_month=int(day))
-    config = await repo.get_schedule_by_parser(parser_name=parser_name)
+
+    await repo_manager.parser_schedule_repo.update_parser_schedule(parser_name, day_of_month=int(day))
+    config = await repo_manager.parser_schedule_repo.get_schedule_by_parser(parser_name=parser_name)
     await callback.message.edit_text(
         text=f"⚙️ Настройки: {parser_name}",
         reply_markup=generate_parser_settings_keyboard(config=config,
@@ -183,26 +180,26 @@ async def set_monthday(callback: types.CallbackQuery, db: DataBase):
 
 
 @router.callback_query(F.data == "change_status_auto_pars")
-async def change_status_auto_pars(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def change_status_auto_pars(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    repo = ParserScheduleRepository(db)
-    conf_repo = await repo.get_all_schedule_conditions()
+
+    conf_repo = await repo_manager.parser_schedule_repo.get_all_schedule_conditions()
 
     await callback_query.message.edit_text(text="Управление парсерами:",
                                            reply_markup=change_status_auto_pars_kb(conf_pars=conf_repo))
 
 
 @router.callback_query(F.data.startswith("change_pars_status:"))
-async def change_pars_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+async def change_pars_status(callback: types.CallbackQuery, state: FSMContext) -> None:
     parser_name = callback.data.split(":")[1]
-    repo = ParserScheduleRepository(db)
-    conf_repo = await repo.get_all_schedule_conditions()
+
+    conf_repo = await repo_manager.parser_schedule_repo.get_all_schedule_conditions()
 
     # Инвертируем статус региона
     new_status = not conf_repo.get(parser_name)[0].get('is_enabled', 0)
-    await repo.update_status_pars(parser_name=parser_name,
+    await repo_manager.parser_schedule_repo.update_status_pars(parser_name=parser_name,
                                   is_enabled=new_status)
-    conf_repo = await repo.get_all_schedule_conditions()
+    conf_repo = await repo_manager.parser_schedule_repo.get_all_schedule_conditions()
 
     await callback.message.edit_text(text="Управление парсерами:",
                                      reply_markup=change_status_auto_pars_kb(conf_pars=conf_repo))

@@ -9,10 +9,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bot.keyboards.big_parser_keyboards import products_menu_keyboards
 from bot.keyboards.pars_price_product_keyboards import parsing_price_keyboards, back_parsing_price_keyboards
 from config import moscow_tz, regions, regions_name, regions_id
-from database.db import get_url_products
-from database.db_bot import DataBase
-from database.db_bot_repo.repositories.country_price import CountyPriceRepository
-from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from config_bot import repo_manager
 from entities.parser_entity import ParserName
 from service.last_pars import get_last_pars
 from parser.parsing_price_products import pars_price
@@ -22,9 +19,8 @@ router = Router(name="Управление большим парсером")
 
 
 @router.callback_query(F.data == "big_parser_products_menu")
-async def products_menu(callback_query: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
-    repo_conf = ParserScheduleRepository(db)
-    _, products, _ = await get_last_pars(repo_conf=repo_conf)
+async def products_menu(callback_query: types.CallbackQuery, state: FSMContext) -> None:
+    _, products, _ = await get_last_pars(repo_manager=repo_manager)
     await callback_query.message.edit_text(
         f"Парсинг был {products}",
         reply_markup=products_menu_keyboards()
@@ -32,8 +28,7 @@ async def products_menu(callback_query: types.CallbackQuery, db: DataBase, state
 
 
 @router.callback_query(F.data == "start_big_parsing")
-async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> None:
-    repo_conf = ParserScheduleRepository(db)
+async def start_parser(callback_query: types.CallbackQuery) -> None:
     await callback_query.message.edit_text(
         "Парсер запущен"
     )
@@ -42,15 +37,14 @@ async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> Non
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text=f"Большой парсер окончил работу!")
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")
-    await repo_conf.update_last_run(parser_name=ParserName.BIG_PARSER, date=date)
+    await repo_manager.parser_schedule_repo.update_last_run(parser_name=ParserName.BIG_PARSER, date=date)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
 @router.callback_query(F.data == "parsing_price_products")
-async def parsing_price_product(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def parsing_price_product(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    repo_country_price = CountyPriceRepository(db)
-    country = await repo_country_price.get_all_county_pars_product()
+    country = await repo_manager.country_price_repo.get_all_county_pars_product()
     region_text = "Регионы для копирования цен:\n"
     for region in regions:
         if country.get(region):
@@ -60,7 +54,7 @@ async def parsing_price_product(callback_query: types.CallbackQuery, state: FSMC
 
 
 @router.callback_query(F.data == "start_pars_price_product")
-async def start_parsing_price_product(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def start_parsing_price_product(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await callback_query.message.edit_text(
         "Парсер запущен",
@@ -68,9 +62,8 @@ async def start_parsing_price_product(callback_query: types.CallbackQuery, state
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text='✅Парсинг запущен.')
     start_time = time.time()
-    links = get_url_products()
-    repo_country_price = CountyPriceRepository(db)
-    country = await repo_country_price.get_all_county_pars_product()
+    links = repo_manager.product_repo.get_url_products()
+    country = await repo_manager.country_repo.get_all_county_pars_product()
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text=f"Начат парсинг цен {len(links)} товаров.")
 
@@ -108,11 +101,10 @@ async def start_parsing_price_product(callback_query: types.CallbackQuery, state
 
 
 @router.callback_query(F.data == "change_pars_product_regions")
-async def start_parsing_price_product_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def start_parsing_price_product_(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     inline_keyboard = []
-    repo_country_price = CountyPriceRepository(db)
-    country = await repo_country_price.get_all_county_pars_product()
+    country = await repo_manager.country_price_repo.get_all_county_pars_product()
     for region in regions:
         if country.get(region):
 
@@ -134,17 +126,16 @@ async def start_parsing_price_product_(callback_query: types.CallbackQuery, stat
 
 
 @router.callback_query(F.data.startswith("change_pars_product_country:"))
-async def toggle_region_product_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+async def toggle_region_product_status(callback: types.CallbackQuery, state: FSMContext) -> None:
     region = callback.data.split(":")[1]  # Получаем регион из callback_data
-    repo_country_price = CountyPriceRepository(db)
-    country = await repo_country_price.get_all_county_pars_product()
+    country = await repo_manager.country_repo.get_all_county_pars_product()
 
     # Инвертируем статус региона
     new_status = not country.get(region, 0)
 
     # Обновляем статус региона в БД
-    await repo_country_price.update_region_pars_product(region, new_status)
-    country = await repo_country_price.get_all_county_pars_product()
+    await repo_manager.country_repo.update_region_pars_product(region, new_status)
+    country = await repo_manager.country_repo.get_all_county_pars_product()
     # Обновляем клавиатуру
     inline_keyboard = []
     for region in regions:

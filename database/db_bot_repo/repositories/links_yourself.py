@@ -4,7 +4,7 @@ from database.db_bot import DataBase
 from database.db_bot_repo.models.links_yourself import LinkYourself
 
 
-class LinksYourselfRepository:
+class LinkYourselfRepository:
 
     def __init__(self, db: DataBase):
         self.db = db

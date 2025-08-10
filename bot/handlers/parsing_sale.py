@@ -14,10 +14,7 @@ from bot.keyboards.parsing_sale_keyboards import (parsing_sale_keyboards,
                                                   change_pars_county_sale_kb,
                                                   parsing_sale_settings_kb)
 from config import regions, regions_name, regions_id
-from database.db_bot import DataBase
-from database.db_bot_repo.repositories.country import CountryRepository
-from database.db_bot_repo.repositories.links_yourself import LinksYourselfRepository
-from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from config_bot import repo_manager
 from entities.parser_entity import ParserName
 
 from parser.parsing_links import open_page_and_scroll
@@ -34,10 +31,10 @@ class NewLinkForPars(StatesGroup):
 
 
 @router.callback_query(F.data == "parsing_sale")
-async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars_sale()
+
+    country = await repo_manager.country_repo.get_all_county_pars_sale()
     region_text = "Регионы для копирования цен:\n"
     for region in regions:
         if country.get(region):
@@ -47,8 +44,7 @@ async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMCo
 
 
 @router.callback_query(F.data == "start_parsing_sale")
-async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
-    repo_links = LinksYourselfRepository(db)
+async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     await callback_query.message.edit_text(
         "✅ Парсер запущен",
@@ -58,7 +54,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
     start_time = time.time()
     sale_links = []
     links = await pars_link_for_auto_pars()
-    links.extend(await repo_links.get_all_links_yourself())
+    links.extend(await repo_manager.link_yourself_repo.get_all_links_yourself())
     if len(links) > 0:
         text_response = f"⛓️‍💥 Найдено распродаж: {len(links)} ✅\n" + "\n".join(links)
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -66,8 +62,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
 
         all_links_products = await open_page_and_scroll(links)
         sale_links += all_links_products
-        repo_country = CountryRepository(db)
-        country = await repo_country.get_all_county_pars_sale()
+        country = await repo_manager.country_repo.get_all_county_pars_sale()
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'⛓️‍💥 Найдено ссылок на игры: {len(sale_links)} ✅')
         regions_to_parse = [region for region in regions if country.get(region)]
@@ -105,48 +100,48 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
                                                    f'⏰ Время парсинга: {str(timedelta(seconds=elapsed_time))[:-3]} ЧЧ:ММ')
 
         # Необходимо все товары обнулить по sale_product
-й
+        await repo_manager.product_repo.set_sale_status_false_all_products()
         # Необходимо все айдишники обернуть в распродажу!
         product_ids = [link.split('/')[-2] for link in sale_links]
+        await repo_manager.product_repo.set_sale_status_true_products(product_ids)
 
     else:
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'Было найдено ровно 0 ссылок с распродажей :(')
 
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")
-    repo_conf = ParserScheduleRepository(db)
-    await repo_conf.update_last_run(parser_name=ParserName.SALE, date=date)
+    await repo_manager.parser_schedule_repo.update_last_run(parser_name=ParserName.SALE, date=date)
 
 
 @router.callback_query(F.data == "change_pars_regions")
-async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars_sale()
+
+    country = await repo_manager.country_repo.get_all_county_pars_sale()
 
     keyboard = change_pars_county_sale_kb(country=country, regions_name=regions_name, regions=regions)
     await callback_query.message.edit_text("Регионы для копирования цен:", reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("change_pars_country:"))
-async def toggle_region_status(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
+async def toggle_region_status(callback: types.CallbackQuery, state: FSMContext) -> None:
     region = callback.data.split(":")[1]
-    repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars_sale()
+
+    country = await repo_manager.country_repo.get_all_county_pars_sale()
 
     # Инвертируем статус региона
     new_status = not country.get(region, 0)
-    await repo_country.update_region_pars(region, new_status)
-    country = await repo_country.get_all_county_pars_sale()
+    await repo_manager.country_repo.update_region_pars(region, new_status)
+    country = await repo_manager.country_repo.get_all_county_pars_sale()
 
     keyboard = change_pars_county_sale_kb(country=country, regions_name=regions_name, regions=regions)
     await callback.message.edit_text("Выберите регионы:", reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("settings_pars_sale"))
-async def settings_pars_sale(callback: types.CallbackQuery, db: DataBase, state: FSMContext) -> None:
-    repo_country = CountryRepository(db)
-    country = await repo_country.get_all_county_pars_sale()
+async def settings_pars_sale(callback: types.CallbackQuery, state: FSMContext) -> None:
+
+    country = await repo_manager.country_repo.get_all_county_pars_sale()
     text = "Регионы для копирования цен:\n"
     for region in regions:
         if country.get(region):

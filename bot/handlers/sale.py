@@ -10,7 +10,7 @@ router = Router(name="Распродажи")
 
 
 @router.callback_query(F.data == "sale_panel")
-async def back_sale(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+async def back_sale(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
     repo_conf = ParserScheduleRepository(db)
     _,_, last_pars_date = await get_last_pars(repo_conf=repo_conf)
