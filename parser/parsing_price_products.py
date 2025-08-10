@@ -66,7 +66,7 @@ async def pars_price(
                                 original_price=original_price,
                                 discounted_price=discounted_price,
                                 discounted_percentage=discounted_percentage,
-                                ru_price=float(calculate_price(
+                                ru_price=float(await calculate_price(
                                     country[-2:],
                                     discounted_price,
                                     discounted_price)[1], )
@@ -142,7 +142,7 @@ async def pars_price(
                                     original_price=original_price,
                                     discounted_price=discounted_price,
                                     discounted_percentage=discounted_percentage,
-                                    ru_price=float(calculate_price(
+                                    ru_price=float(await calculate_price(
                                         country[-2:],
                                         discounted_price,
                                         discounted_price)[1],)

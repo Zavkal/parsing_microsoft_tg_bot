@@ -4,9 +4,11 @@ from database.db_bot_repo.repositories.country import CountryRepository
 from database.db_bot_repo.repositories.country_price import CountryPriceRepository
 from database.db_bot_repo.repositories.links_yourself import LinkYourselfRepository
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
+from database.db_repo.repositories.exchange import ExchangeRepository
+from database.db_repo.repositories.formulas import FormulasRepository
 
-from database.db_repo.repositories.product_price_repository import ProductPriceRepository
-from database.db_repo.repositories.product_repository import ProductRepository
+from database.db_repo.repositories.product_price import ProductPriceRepository
+from database.db_repo.repositories.product import ProductRepository
 
 
 class RepoManager:
@@ -20,3 +22,7 @@ class RepoManager:
         # Работа с продуктами
         self.product_repo = ProductRepository(db)
         self.product_price_repo = ProductPriceRepository(db)
+
+        # Работа с ценами
+        self.exchange_repo = ExchangeRepository(db)
+        self.formulas_repo = FormulasRepository(db)

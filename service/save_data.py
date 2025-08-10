@@ -20,7 +20,7 @@ async def save_data_in_list(sort_by=True):
                 continue
 
             for price_data in price_data_list:
-                orig_price, disc_price = calculate_price(
+                orig_price, disc_price = await calculate_price(
                     original_price=price_data.get("original_price"),
                     discounted_price=price_data.get('discounted_price'),
                     country_code=country_code,
