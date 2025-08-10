@@ -1,3 +1,4 @@
+import logging
 import re
 import asyncio
 from selenium.webdriver.common.by import By
@@ -75,10 +76,10 @@ async def get_product_links(driver):
                 extracted_links = re.findall(r'href=["\'](.*?)["\']', html_content)
                 links.extend(extracted_links)
             except Exception as e:
-                print(f"Ошибка при извлечении ссылки: {e}")
+                logging.error(f"Ошибка при извлечении ссылки: {e}")
 
         return links
 
     except Exception as e:
-        print(f'ФАТАЛЬНАЯ ОШИБКА РАБОТЫ: {e}')
+        logging.error(f'ФАТАЛЬНАЯ ОШИБКА РАБОТЫ: {e}')
         return []  # Возвращаем пустой список при ошибке

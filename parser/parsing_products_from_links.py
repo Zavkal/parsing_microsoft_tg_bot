@@ -16,9 +16,9 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
     counter = 0
     for link in links:
         counter += 1
-        if counter % 1000 == 0:
+        if counter % 100 == 0:
             await callback.bot.send_message(chat_id=callback.from_user.id,
-                                            text=f"Найдено 1000 игр")
+                                            text=f"Найдено 100 игр")
         capabilities_list = []
         link = link.replace(link.split('/')[3], country)
         try:
@@ -134,7 +134,6 @@ async def pars_product_links(links: list, country: str, callback: types.Callback
                         else:
                             end_date_sale = None
                         all_data.end_date_sale = end_date_sale
-                        print(product_id, link.replace(link.split('/')[3], 'eu-EN'))
 
                         # Добавление продукта
                         add_product(all_data)

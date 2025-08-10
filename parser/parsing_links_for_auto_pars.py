@@ -1,3 +1,5 @@
+import logging
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -20,7 +22,7 @@ async def pars_link_for_auto_pars():
         driver.quit()
     except Exception as e:
         driver.quit()
-        print(e)
+        logging.error(e)
 
     return links
 

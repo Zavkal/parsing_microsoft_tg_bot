@@ -11,17 +11,18 @@ from aiogram.fsm.state import StatesGroup, State
 
 from bot.keyboards.base_menu_keyboards import del_msg_kb, cancel_msg_kb
 from bot.keyboards.parsing_sale_keyboards import (parsing_sale_keyboards,
-                                                  stop_parser_sale_keyboards, change_pars_county_sale_kb,
+                                                  change_pars_county_sale_kb,
                                                   parsing_sale_settings_kb)
 from config import regions, regions_name, regions_id
 from database.db_bot import DataBase
 from database.db_bot_repo.repositories.country import CountryRepository
+from database.db_bot_repo.repositories.links_yourself import LinksYourselfRepository
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
 from entities.parser_entity import ParserName
 
-from service.parsing_links import open_page_and_scroll
-from service.parsing_links_for_auto_pars import pars_link_for_auto_pars
-from service.parsing_price_products import pars_price
+from parser.parsing_links import open_page_and_scroll
+from parser.parsing_links_for_auto_pars import pars_link_for_auto_pars
+from parser.parsing_price_products import pars_price
 
 router = Router(name="Парсинг распродажи")
 
@@ -47,17 +48,17 @@ async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMCo
 
 @router.callback_query(F.data == "start_parsing_sale")
 async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMContext, db: DataBase) -> None:
+    repo_links = LinksYourselfRepository(db)
     await state.clear()
     await callback_query.message.edit_text(
         "✅ Парсер запущен",
-        reply_markup=stop_parser_sale_keyboards()
     )
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text='✅ Парсер запущен.')
     start_time = time.time()
     sale_links = []
     links = await pars_link_for_auto_pars()
-    links.append()  # ВАЖНО добавить ссылку из ручного парса если есть (Придумай логику)
+    links.extend(await repo_links.get_all_links_yourself())
     if len(links) > 0:
         text_response = f"⛓️‍💥 Найдено распродаж: {len(links)} ✅\n" + "\n".join(links)
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -69,7 +70,6 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
         country = await repo_country.get_all_county_pars()
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'⛓️‍💥 Найдено ссылок на игры: {len(sale_links)} ✅')
-
         regions_to_parse = [region for region in regions if country.get(region)]
 
         # Создаем список задач
@@ -103,6 +103,12 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
                                                    f'📅 Дата: {datetime.now(moscow_tz).strftime("%d-%m-%Y")}\n'
                                                    f'⌛️ Время: {datetime.now(moscow_tz).strftime("%H:%M")}\n'
                                                    f'⏰ Время парсинга: {str(timedelta(seconds=elapsed_time))[:-3]} ЧЧ:ММ')
+
+        # Необходимо все товары обнулить по sale_product
+й
+        # Необходимо все айдишники обернуть в распродажу!
+        product_ids = [link.split('/')[-2] for link in sale_links]
+
     else:
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                               text=f'Было найдено ровно 0 ссылок с распродажей :(')
@@ -149,17 +155,6 @@ async def settings_pars_sale(callback: types.CallbackQuery, db: DataBase, state:
     await callback.message.edit_text(text=text,
                                      reply_markup=parsing_sale_settings_kb())
 
-
-async def stop_parser_sale_products():
-    pass
-
-
-@router.callback_query(F.data == "stop_parser_sale")
-async def stop_parser(callback_query: types.CallbackQuery) -> None:
-    await stop_parser_sale_products()
-    await callback_query.message.edit_text(
-        "Парсер остановлен",
-        reply_markup=parsing_sale_keyboards())
 
 
 @router.callback_query(F.data == "add_link_for_pars")

@@ -6,9 +6,8 @@ from aiogram import types, Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.keyboards.big_parser_keyboards import products_menu_keyboards, stop_parser_keyboards
-from bot.keyboards.pars_price_product_keyboards import parsing_price_keyboards, back_parsing_price_keyboards, \
-    stop_parser_price_keyboards
+from bot.keyboards.big_parser_keyboards import products_menu_keyboards
+from bot.keyboards.pars_price_product_keyboards import parsing_price_keyboards, back_parsing_price_keyboards
 from config import moscow_tz, regions, regions_name, regions_id
 from database.db import get_url_products
 from database.db_bot import DataBase
@@ -16,8 +15,8 @@ from database.db_bot_repo.repositories.country_price import CountyPriceRepositor
 from database.db_bot_repo.repositories.parser_schedule import ParserScheduleRepository
 from entities.parser_entity import ParserName
 from service.last_pars import get_last_pars
-from service.parsing_price_products import pars_price
-from service.start_big_parser import start_big_parser_products
+from parser.parsing_price_products import pars_price
+from parser.start_big_parser import start_big_parser_products
 
 router = Router(name="Управление большим парсером")
 
@@ -36,8 +35,7 @@ async def products_menu(callback_query: types.CallbackQuery, db: DataBase, state
 async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> None:
     repo_conf = ParserScheduleRepository(db)
     await callback_query.message.edit_text(
-        "Парсер запущен",
-        reply_markup=stop_parser_keyboards()
+        "Парсер запущен"
     )
 
     await start_big_parser_products(callback_query)
@@ -45,18 +43,6 @@ async def start_parser(callback_query: types.CallbackQuery, db: DataBase) -> Non
                                           text=f"Большой парсер окончил работу!")
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")
     await repo_conf.update_last_run(parser_name=ParserName.BIG_PARSER, date=date)
-
-
-async def stop_big_parser_products():
-    pass
-
-
-@router.callback_query(F.data == "stop_big_parser")
-async def stop_parser(callback_query: types.CallbackQuery):
-    await stop_big_parser_products()
-    await callback_query.message.edit_text(
-        "Парсер остановлен",
-        reply_markup=products_menu_keyboards())
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -78,7 +64,6 @@ async def start_parsing_price_product(callback_query: types.CallbackQuery, state
     await state.clear()
     await callback_query.message.edit_text(
         "Парсер запущен",
-        reply_markup=stop_parser_price_keyboards()
     )
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text='✅Парсинг запущен.')
@@ -181,15 +166,5 @@ async def toggle_region_product_status(callback: types.CallbackQuery, db: DataBa
     await callback.message.edit_text("Выберите регионы:", reply_markup=keyboard)
 
 
-async def stop_parser_price_products():
-    pass
-
-
-@router.callback_query(F.data == "stop_parser_price_product")
-async def stop_parser(callback_query: types.CallbackQuery):
-    await stop_parser_price_products()
-    await callback_query.message.edit_text(
-        "Парсер остановлен",
-        reply_markup=parsing_price_keyboards())
 
 

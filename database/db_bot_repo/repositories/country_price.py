@@ -7,7 +7,7 @@ class CountyPriceRepository:
         self.db = db
 
 
-    async def get_all_county_pars_product(self, ):
+    async def get_all_county_pars_product(self, ) -> dict:
         async with self.db.get_session() as conn:
             cursor = await conn.execute('SELECT * FROM country_price')
             row = await cursor.fetchone()

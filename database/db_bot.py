@@ -58,6 +58,12 @@ class DataBase:
                 )
                 """)
 
+            await conn.execute("""CREATE TABLE IF NOT EXISTS links_yourself(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL
+                )
+                """)
+
             # Проверяем, есть ли записи в таблице country
             cursor = await conn.execute("SELECT COUNT(*) FROM country")
             count = await cursor.fetchone()

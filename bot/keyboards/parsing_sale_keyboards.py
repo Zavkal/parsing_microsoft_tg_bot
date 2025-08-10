@@ -32,15 +32,6 @@ def back_parsing_sale_keyboards():
     return keyboard
 
 
-def stop_parser_sale_keyboards():
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="⛔️ Остановить парсер распродаж", callback_data="stop_parser_sale")]
-        ]
-    )
-    return keyboard
-
-
 def change_pars_county_sale_kb(regions: list, country: dict, regions_name: dict):
     inline_keyboard = []
     for region in regions:

@@ -96,7 +96,13 @@ FREQUENCY_RU = {
 }
 
 
+active_parsers = {
+    ParserName.BIG_PARSER: None,
+    ParserName.SALE: None,
+    ParserName.PARS_PRICE: None
+}
 
 
 link = 'https://www.xbox.com/en-US/games/browse/game-deals'
+
 logging.basicConfig(level=logging.INFO)

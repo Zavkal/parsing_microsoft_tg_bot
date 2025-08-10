@@ -1,6 +1,8 @@
+import logging
+
 from database.db import get_game_by_id, update_price_product, update_end_date_sale_product, update_is_sale_product
 from service.calculate import calculate_price
-from service.parsing_products_from_links import pars_product_links
+from parser.parsing_products_from_links import pars_product_links
 import asyncio
 import json
 import re
@@ -85,7 +87,7 @@ async def pars_price(links: list, country: str, depth: int = 2, sale: bool = Fal
                     break
 
         except Exception as e:
-            print(e)
+            logging.error(e)
             exception.append(e)
 
         finally:
@@ -141,8 +143,6 @@ async def pars_price(links: list, country: str, depth: int = 2, sale: bool = Fal
                                     update_is_sale_product(product_id)
 
                                 update_end_date_sale_product(end_date_sale, product_id)
-
-                                print(country, original_price, discounted_price)
                         except Exception as e:
                             exception.append(f"Ошибка парсинга цены {product_id}, {link}, {e}")
                     else:

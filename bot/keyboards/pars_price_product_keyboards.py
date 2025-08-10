@@ -19,24 +19,3 @@ def back_parsing_price_keyboards():
         ]
     )
     return back_parsing_price_keyboards_
-
-
-def stop_parser_price_keyboards():
-    stop_parser_price_keyboards_ = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="⛔️ Остановить парсер цен", callback_data="stop_parser_price_product")]
-        ]
-    )
-    return stop_parser_price_keyboards_
-
-
-
-
-
-
-
-
-
-
-
-
