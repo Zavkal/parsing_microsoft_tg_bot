@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import aiohttp
@@ -32,7 +33,7 @@ async def pars_product_links(
             link = link.replace(link.split('/')[3], country)
             try:
                 # Отправляем GET-запрос
-                response = await fetch_for_product(session=session,
+                response, response_text = await fetch_for_product(session=session,
                                                    url=link)
 
                 product_id = link.split('/')[-2]
@@ -46,13 +47,13 @@ async def pars_product_links(
                 # Проверяем, успешен ли запрос
                 if response.status != 200:
                     link = link.replace(link.split('/')[3], 'eu-EN')
-                    response = await fetch_for_product(session=session,
+                    response, response_text = await fetch_for_product(session=session,
                                                        url=link)
                 if response.status == 200:
 
                     # Используем регулярное выражение для поиска данных, начиная с window.__PRELOADED_STATE__
                     pattern = r'window\.__PRELOADED_STATE__\s*=\s*(\{.*?\});'
-                    match = re.search(pattern, response.text, re.DOTALL)
+                    match = re.search(pattern, response_text, re.DOTALL)
 
                     if match:
                         preloaded_state = match.group(1)
@@ -150,7 +151,6 @@ async def pars_product_links(
                             else:
                                 end_date_sale = None
                             all_data.end_date_sale = end_date_sale
-
                             # Добавление продукта
                             await repo_manager.product_repo.add(product_data=all_data)
                         except json.JSONDecodeError:
@@ -161,3 +161,12 @@ async def pars_product_links(
                     logging.error(f"Не смог найти основную страницу на en-US {link}")
             except Exception as e:
                 logging.error(f"Ошибка при обработке {link}: {e}")
+
+
+if __name__ == '__main__':
+    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001"]
+    country = "US"
+    asyncio.run(pars_product_links(
+        links=links,
+        country=country,
+    ))

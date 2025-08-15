@@ -20,4 +20,4 @@ async def fetch_for_product(session, url):
     """Асинхронный запрос с ограничением числа одновременных запросов"""
     async with SEMAPHORE:
         async with session.get(url) as response:
-            return response
+            return response, await response.text()
