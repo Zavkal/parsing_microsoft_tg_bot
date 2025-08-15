@@ -1,7 +1,7 @@
 import logging
 import pytz
 
-from entities.parser_entity import ParserName
+from apps.parser.entities.parser_entity import ParserName
 
 # Указываем часовой пояс Москвы
 moscow_tz = pytz.timezone("Europe/Moscow")
