@@ -22,7 +22,7 @@ async def pars_link_for_auto_pars():
         driver.quit()
     except Exception as e:
         driver.quit()
-        logging.error(e)
+        logging.error(f"Ошибка ссылок для автопарса {e}")
 
     return links
 

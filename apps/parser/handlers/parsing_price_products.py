@@ -20,7 +20,6 @@ async def pars_price(
         links: list,
         country: str,
         depth: int = 2,
-        sale: bool = False,
 ) -> tuple[list, list, list]:
 
     if depth < 0:
@@ -28,7 +27,7 @@ async def pars_price(
 
     #  Отдельный парсер цен для Нигерии
     if country == "en-NG":
-        driver = Driver(headless=False, disable_gpu=True)  # Запуск в фоновом режиме (без GUI)
+        driver = Driver(headless=True)
         new_links = []
         old_links = []
         exception = []
@@ -44,7 +43,8 @@ async def pars_price(
                     url = url.replace("www.microsoft.com/en-ng/p", "www.xbox.com/eu-EN/games/store")
                     url = url.replace(url.split("/")[-1], product_id)
 
-                    if await repo_manager.product_repo.get_by_product_id(product_id=product_id):
+                    product = await repo_manager.product_repo.get_by_product_id(product_id=product_id)
+                    if product:
                         old_links.append(url)
                         # Извлекаем цены
                         price_elements = card.find_elements(By.CSS_SELECTOR, "p[aria-hidden='true'] span")
@@ -60,22 +60,19 @@ async def pars_price(
 
                             # Округляем до 2 знаков после запятой
                             discounted_percentage = round(discounted_percentage, 2)
+                            ru_price = await calculate_price(
+                                country[-2:],
+                                discounted_price,
+                                discounted_price)
+
                             await repo_manager.product_price_repo.upsert_price(
-                                country=country,
+                                country_code=country[-2:],
                                 product_id=product_id,
                                 original_price=original_price,
                                 discounted_price=discounted_price,
                                 discounted_percentage=discounted_percentage,
-                                ru_price=float(await calculate_price(
-                                    country[-2:],
-                                    discounted_price,
-                                    discounted_price)[1], )
+                                ru_price=float(ru_price[1]),
                             )
-                            if sale:
-                                await repo_manager.product_repo.set_sale_status_for_product(product_id=product_id)
-                            else:
-                                await repo_manager.product_repo.remove_sale_status_for_product(product_id=product_id)
-
                     else:
                         new_links.append(url + '/001')
 
@@ -87,7 +84,7 @@ async def pars_price(
                     break
 
         except Exception as e:
-            logging.error(e)
+            logging.error(f"Ошибка при парсе Нигерии {e}")
             exception.append(e)
 
         finally:
@@ -95,7 +92,7 @@ async def pars_price(
 
         if new_links:
             await pars_product_links(new_links, "ru-RU")
-            parsed_old, parsed_new, parsed_exceptions = await pars_price([], 'en-NG', depth=depth - 1, sale=sale)
+            parsed_old, parsed_new, parsed_exceptions = await pars_price([], 'en-NG', depth=depth - 1)
             old_links += parsed_old
             new_links += parsed_new
             exception += parsed_exceptions
@@ -113,7 +110,7 @@ async def pars_price(
                 link = link.replace(link.split('/')[3], country)
                 product_id = link.split('/')[-2]
 
-                if repo_manager.product_repo.get_by_product_id(product_id=product_id):
+                if await repo_manager.product_repo.get_by_product_id(product_id=product_id):
                     old_links.append(link)
                     html_content = await fetch_for_price(session=session,
                                                          url=link)
@@ -136,22 +133,19 @@ async def pars_price(
                                     original_price = discounted_price = discounted_percentage = 0
                                     end_date_sale = None
 
+                                ru_price = await calculate_price(
+                                    country[-2:],
+                                    discounted_price,
+                                    discounted_price)
+
                                 await repo_manager.product_price_repo.upsert_price(
-                                    country=country,
+                                    country_code=country[-2:],
                                     product_id=product_id,
                                     original_price=original_price,
                                     discounted_price=discounted_price,
                                     discounted_percentage=discounted_percentage,
-                                    ru_price=float(await calculate_price(
-                                        country[-2:],
-                                        discounted_price,
-                                        discounted_price)[1],)
+                                    ru_price=float(ru_price[1]),
                                 )
-
-                                if sale:
-                                    await repo_manager.product_repo.set_sale_status_for_product(product_id=product_id)
-                                else:
-                                    await repo_manager.product_repo.remove_sale_status_for_product(product_id=product_id)
                                 await repo_manager.product_repo.update_end_date_sale_product(end_date_sale, product_id)
                         except Exception as e:
                             exception.append(f"Ошибка парсинга цены {product_id}, {link}, {e}")
@@ -163,8 +157,7 @@ async def pars_price(
 
         if new_links:
             await pars_product_links(new_links, "ru-RU")
-            parsed_old, parsed_new, parsed_exceptions = await pars_price(new_links, country=country, depth=depth - 1,
-                                                                         sale=sale)
+            parsed_old, parsed_new, parsed_exceptions = await pars_price(new_links, country=country, depth=depth - 1)
             old_links += parsed_old
             new_links += parsed_new
             exception += parsed_exceptions

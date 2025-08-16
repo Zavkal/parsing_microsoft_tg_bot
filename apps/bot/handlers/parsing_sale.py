@@ -10,9 +10,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from apps.bot.keyboards.base_menu_keyboards import del_msg_kb, cancel_msg_kb
-from apps.bot.keyboards.parsing_sale_keyboards import (parsing_sale_keyboards,
-                                                       change_pars_county_sale_kb,
+from apps.bot.keyboards.parsing_sale_keyboards import (change_pars_county_sale_kb,
                                                        parsing_sale_settings_kb)
+from apps.bot.service.generate_text_settings import generate_text_pars_sale_settings
 from config import regions, regions_name, regions_id
 from config_bot import repo_manager
 from apps.parser.entities.parser_entity import ParserName
@@ -26,21 +26,9 @@ router = Router(name="Парсинг распродажи")
 moscow_tz = pytz.timezone("Europe/Moscow")
 
 
-class NewLinkForPars(StatesGroup):
+class LinksForParsState(StatesGroup):
     new_link = State()
-
-
-@router.callback_query(F.data == "parsing_sale")
-async def parsing_sale_handler(callback_query: types.CallbackQuery, state: FSMContext) -> None:
-    await state.clear()
-
-    country = await repo_manager.country_repo.get_all_county_pars_sale()
-    region_text = "Регионы для копирования цен:\n"
-    for region in regions:
-        if country.get(region):
-            region_text += regions_name.get(region) + "\n"
-    await callback_query.message.edit_text(text=region_text,
-                                           reply_markup=parsing_sale_keyboards())
+    del_link = State()
 
 
 @router.callback_query(F.data == "start_parsing_sale")
@@ -68,7 +56,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
 
         # Создаем список задач
         tasks = [
-            pars_price(sale_links, country=regions_id.get(region), sale=True)
+            pars_price(sale_links, country=regions_id.get(region))
             for region in regions_to_parse
         ]
 
@@ -102,7 +90,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
         await repo_manager.product_repo.set_sale_status_false_all_products()
         # Необходимо все айдишники обернуть в распродажу!
         product_ids = [link.split('/')[-2] for link in sale_links]
-        await repo_manager.product_repo.set_sale_status_for_products(product_ids)
+        await repo_manager.product_repo.set_sale_status_for_all_products(product_ids)
 
     else:
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -137,42 +125,95 @@ async def toggle_region_status(callback: types.CallbackQuery, state: FSMContext)
     await callback.message.edit_text("Выберите регионы:", reply_markup=keyboard)
 
 
-@router.callback_query(F.data.startswith("settings_pars_sale"))
+@router.callback_query(F.data == "settings_pars_sale")
 async def settings_pars_sale(callback: types.CallbackQuery, state: FSMContext) -> None:
-
-    country = await repo_manager.country_repo.get_all_county_pars_sale()
-    text = "Регионы для копирования цен:\n"
-    for region in regions:
-        if country.get(region):
-            text += regions_name.get(region) + "\n"
-    text += '\n\nСсылки:\n'
-    await callback.message.edit_text(text=text,
-                                     reply_markup=parsing_sale_settings_kb())
+    text = await generate_text_pars_sale_settings()
+    msg = await callback.message.edit_text(text=text,
+                                     disable_web_page_preview=True)
+    await msg.edit_reply_markup(reply_markup=parsing_sale_settings_kb(msg_id=msg.message_id))
 
 
-
-@router.callback_query(F.data == "add_link_for_pars")
+@router.callback_query(F.data.startswith("add_link_for_pars"))
 async def add_link_for_pars(callback: types.CallbackQuery, state: FSMContext) -> None:
+    msg_id = callback.data.split(":")[1]
     await callback.answer()
     call_del = await callback.message.answer(
         text='Введите ссылку с распродажами!',
         reply_markup=cancel_msg_kb())
-    await state.update_data(call_del=call_del)
-    await state.set_state(NewLinkForPars.new_link)
+    await state.update_data(call_del=call_del, msg_id=msg_id)
+    await state.set_state(LinksForParsState.new_link)
 
 
-@router.message(NewLinkForPars.new_link)
+@router.message(LinksForParsState.new_link)
 async def add_link_for_pars_(message: types.Message, state: FSMContext) -> None:
     data = await state.get_data()
     call_del = data.get("call_del")
+    msg_id = int(data.get("msg_id"))
     link = message.text.strip()
+
     await message.delete()
+
     URL_REGEX = re.compile(
         r'^(https?://)?(www\.)?([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}(/[\w\-._~:/?#[\]@!$&\'()*+,;=]*)?$'
     )
+    all_links = await repo_manager.link_yourself_repo.get_all_links_yourself()
+
     if URL_REGEX.match(link):
-        await call_del.edit_text(text=f"✅ Ссылка принята:\n{link}",
+        if link in all_links:
+            msg_del = await message.answer("❌ Данная ссылка уже есть!")
+            await asyncio.sleep(2)
+            await msg_del.delete()
+        else:
+            await call_del.edit_text(text=f"✅ Ссылка принята:\n{link}",
+                                     reply_markup=del_msg_kb())
+            await repo_manager.link_yourself_repo.create_new_link_yourself(url=link)
+            text = await generate_text_pars_sale_settings()
+            await message.bot.edit_message_text(
+                chat_id=message.from_user.id,
+                message_id=msg_id,
+                text=text,
+                reply_markup=parsing_sale_settings_kb(msg_id=msg_id),
+                disable_web_page_preview=True,
+
+            )
+            await state.clear()
+    else:
+        msg_del = await message.answer("❌ Пожалуйста, введите корректную ссылку.")
+        await asyncio.sleep(2)
+        await msg_del.delete()
+
+
+@router.callback_query(F.data.startswith("del_link_for_pars"))
+async def del_link_for_pars(callback: types.CallbackQuery, state: FSMContext) -> None:
+    msg_id = callback.data.split(":")[1]
+    await callback.answer()
+    call_del = await callback.message.answer(
+        text='Введите ссылку для удаления!',
+        reply_markup=cancel_msg_kb())
+    await state.update_data(call_del=call_del, msg_id=msg_id)
+    await state.set_state(LinksForParsState.del_link)
+
+
+@router.message(LinksForParsState.del_link)
+async def del_link_for_pars_(message: types.Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    call_del = data.get("call_del")
+    msg_id = int(data.get("msg_id"))
+    link = message.text.strip()
+    await message.delete()
+    all_links = await repo_manager.link_yourself_repo.get_all_links_yourself()
+    if link in all_links:
+        await call_del.edit_text(text=f"✅ Ссылка удалена:\n{link}",
                                  reply_markup=del_msg_kb())
+        await repo_manager.link_yourself_repo.delete_link_yourself(url=link)
+        text = await generate_text_pars_sale_settings()
+        await message.bot.edit_message_text(
+            chat_id=message.from_user.id,
+            message_id=msg_id,
+            text=text,
+            reply_markup=parsing_sale_settings_kb(msg_id=msg_id),
+            disable_web_page_preview=True,
+        )
         await state.clear()
     else:
         msg_del = await message.answer("❌ Пожалуйста, введите корректную ссылку.")

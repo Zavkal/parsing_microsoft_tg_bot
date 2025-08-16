@@ -9,15 +9,20 @@ class FormulasRepository:
     def __init__(self, db: DataBase):
         self.db = db
 
-
-    async def get_formulas(self, ) -> dict:
+    async def get_formulas(self) -> dict:
         async with self.db.get_session() as session:
-            smtm = select(Formulas)
-            result = await session.execute(smtm)
-            columns = result.keys()
-            row = result.fetchone()
-
-            return dict(zip(columns, row))
+            result = await session.execute(select(Formulas))
+            formula = result.scalars().first()  # получаем объект модели
+            if formula:
+                return {
+                    "IN": formula.IN,
+                    "NG": formula.NG,
+                    "US": formula.US,
+                    "AR": formula.AR,
+                    "TR": formula.TR,
+                    "UA": formula.UA,
+                }
+            return {}
 
 
     async def update_formulas(

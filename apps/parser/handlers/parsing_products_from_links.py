@@ -152,7 +152,7 @@ async def pars_product_links(
                                 end_date_sale = None
                             all_data.end_date_sale = end_date_sale
                             # Добавление продукта
-                            await repo_manager.product_repo.add(product_data=all_data)
+                            await repo_manager.product_repo.upsert_product(product_data=all_data)
                         except json.JSONDecodeError:
                             logging.error(f"Ошибка парсинга JSON для продукта {product_id}")
                     else:

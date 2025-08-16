@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -17,7 +18,8 @@ class DataBase:
         try:
             yield session
             await session.commit()
-        except Exception:
+        except Exception as e:
+            logging.error(f"Ошибка в бд {e}")
             await session.rollback()
             raise
         finally:

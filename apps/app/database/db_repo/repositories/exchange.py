@@ -12,10 +12,18 @@ class ExchangeRepository:
     async def get_exchange(self) -> dict:
         async with self.db.get_session() as session:
             result = await session.execute(select(Exchange))
-            columns = result.keys()
-            row = result.fetchone()
-
-            return dict(zip(columns, row))
+            exchange = result.scalars().first()  # получаем объект модели
+            if exchange:
+                return {
+                    "date_exchanged": exchange.date_exchanged,
+                    "IN": exchange.IN,
+                    "NG": exchange.NG,
+                    "US": exchange.US,
+                    "AR": exchange.AR,
+                    "TR": exchange.TR,
+                    "UA": exchange.UA,
+                }
+            return {}
 
     async def update_exchange(
             self,

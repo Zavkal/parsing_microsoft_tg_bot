@@ -13,11 +13,12 @@ def parsing_sale_keyboards():
     return keyboard
 
 
-def parsing_sale_settings_kb():
+def parsing_sale_settings_kb(msg_id: int):
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🏳️ Настройка регионов", callback_data="change_pars_regions")],
-            [InlineKeyboardButton(text="🔗 Ссылки для автопарса ", callback_data="add_link_for_pars")],
+            [InlineKeyboardButton(text="🔗 Добавить ссылку ", callback_data=f"add_link_for_pars:{msg_id}")],
+            [InlineKeyboardButton(text="⛓️‍💥 Удалить ссылку ", callback_data=f"del_link_for_pars:{msg_id}")],
         ]
     )
     keyboard.inline_keyboard.extend(back_parsing_sale_keyboards().inline_keyboard)
@@ -27,7 +28,16 @@ def parsing_sale_settings_kb():
 def back_parsing_sale_keyboards():
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="⏪ Назад", callback_data="parsing_sale")],
+            [InlineKeyboardButton(text="⏪ Назад", callback_data="sale_panel")],
+        ]
+    )
+    return keyboard
+
+
+def back_parsing_sale_settings_keyboards():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="⏪ Назад", callback_data="settings_pars_sale")],
         ]
     )
     return keyboard
@@ -50,7 +60,7 @@ def change_pars_county_sale_kb(regions: list, country: dict, regions_name: dict)
         inline_keyboard.append([button])
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-    keyboard.inline_keyboard.extend(back_parsing_sale_keyboards().inline_keyboard)
+    keyboard.inline_keyboard.extend(back_parsing_sale_settings_keyboards().inline_keyboard)
 
     return keyboard
 

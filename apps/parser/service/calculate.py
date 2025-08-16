@@ -8,88 +8,91 @@ async def calculate_price(
         original_price: float,
         discounted_price: float
 ) -> tuple[float, float]:
-    formula = await repo_manager.product_price_repo.get_formulas().get(country_code)
-    exchange_rate = await repo_manager.exchange_repo.get_exchange()
-    if original_price < 1 and discounted_price < 1:
-        return 0, 0
+    try:
+        formula = (await repo_manager.formulas_repo.get_formulas()).get(country_code)
+        exchange_rate = await repo_manager.exchange_repo.get_exchange()
+        if original_price < 1 and discounted_price < 1:
+            return 0, 0
 
-    original_price, discounted_price = _get_price_exchange(
-        original_price=original_price,
-        discounted_price=discounted_price,
-        exchange_rate=exchange_rate,
-        country_code=country_code,
-    )
-
-    if "IN" == country_code:
-        if discounted_price > 2999:
-            original_price += 200
-            discounted_price += 200
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
+        original_price, discounted_price = _get_price_exchange(
             original_price=original_price,
             discounted_price=discounted_price,
-            formula=formula,
+            exchange_rate=exchange_rate,
+            country_code=country_code,
         )
-        return orig_price_formula, discounted_price_formula
 
-    elif "NG" == country_code:
-        if discounted_price > 2999:
-            original_price += 200
-            discounted_price += 200
+        if "IN" == country_code:
+            if discounted_price > 2999:
+                original_price += 200
+                discounted_price += 200
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
 
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
-            original_price=original_price,
-            discounted_price=discounted_price,
-            formula=formula,
-        )
-        return orig_price_formula, discounted_price_formula
+        elif "NG" == country_code:
+            if discounted_price > 2999:
+                original_price += 200
+                discounted_price += 200
 
-    elif "US" == country_code:
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
-            original_price=original_price,
-            discounted_price=discounted_price,
-            formula=formula,
-        )
-        return orig_price_formula, discounted_price_formula
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
 
-    elif "AR" == country_code:
-        if discounted_price > 2999:
-            original_price += 200
-            discounted_price += 200
+        elif "US" == country_code:
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
 
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
-            original_price=original_price,
-            discounted_price=discounted_price,
-            formula=formula,
-        )
-        return orig_price_formula, discounted_price_formula
+        elif "AR" == country_code:
+            if discounted_price > 2999:
+                original_price += 200
+                discounted_price += 200
 
-    elif "TR" == country_code:
-        if discounted_price > 2999:
-            original_price += 200
-            discounted_price += 200
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
 
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
-            original_price=original_price,
-            discounted_price=discounted_price,
-            formula=formula,
-        )
-        return orig_price_formula, discounted_price_formula
+        elif "TR" == country_code:
+            if discounted_price > 2999:
+                original_price += 200
+                discounted_price += 200
 
-    elif "UA" == country_code:
-        if discounted_price > 2999:
-            original_price += 200
-            discounted_price += 200
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
 
-        orig_price_formula, discounted_price_formula = _get_price_formulas(
-            original_price=original_price,
-            discounted_price=discounted_price,
-            formula=formula,
-        )
-        return orig_price_formula, discounted_price_formula
+        elif "UA" == country_code:
+            if discounted_price > 2999:
+                original_price += 200
+                discounted_price += 200
 
-    else:
-        logging.error(f"Неизвестная страна: {country_code}")
-        return 0, 0
+            orig_price_formula, discounted_price_formula = _get_price_formulas(
+                original_price=original_price,
+                discounted_price=discounted_price,
+                formula=formula,
+            )
+            return orig_price_formula, discounted_price_formula
+
+        else:
+            logging.error(f"Неизвестная страна: {country_code}")
+            return 0, 0
+    except Exception as e:
+        logging.error(f"Ошибка при расчете цен {e}")
 
 
 def _get_price_exchange(

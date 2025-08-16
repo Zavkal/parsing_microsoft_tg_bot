@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from apps.app.database.db_bot import DataBase
 from apps.app.database.db_bot_repo.models.links_yourself import LinkYourself
@@ -16,11 +16,14 @@ class LinkYourselfRepository:
             return [link for link in result.scalars().all()]
 
 
-    async def create_new_link_yourself(self, url: LinkYourself) -> None:
+    async def create_new_link_yourself(self, url: str) -> None:
         async with self.db.get_session() as session:
-            await session.add(url)
+            link = LinkYourself(url=url)
+            session.add(link)
 
 
-    async def delete_links_yourself(self, url: LinkYourself) -> None:
+    async def delete_link_yourself(self, url: str) -> None:
         async with self.db.get_session() as session:
-            await session.delete(url.url)
+            await session.execute(
+                delete(LinkYourself).where(LinkYourself.url == url)
+            )

@@ -33,7 +33,7 @@ class Product(Base, BaseMixin):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True)
-    product_id = Column(String, unique=True, nullable=False)
+    product_id = Column(String, nullable=False)
     url_product = Column(String)
     game_name = Column(String)
     end_date_sale = Column(String)
