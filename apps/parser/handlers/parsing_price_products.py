@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from config_bot import repo_manager
@@ -27,7 +28,7 @@ async def pars_price(
 
     #  Отдельный парсер цен для Нигерии
     if country == "en-NG":
-        driver = Driver(headless=True)
+        driver = Driver(headless=False)
         new_links = []
         old_links = []
         exception = []
@@ -40,7 +41,7 @@ async def pars_price(
                     link_elem = card.find_element(By.CSS_SELECTOR, "h3 a")
                     url = link_elem.get_attribute("href")
                     product_id = url.split("/")[-1].upper()
-                    url = url.replace("www.microsoft.com/en-ng/p", "www.xbox.com/eu-EN/games/store")
+                    url = url.replace("www.microsoft.com/en-ng/p", "www.xbox.com/en-US/games/store")
                     url = url.replace(url.split("/")[-1], product_id)
 
                     product = await repo_manager.product_repo.get_by_product_id(product_id=product_id)
@@ -61,9 +62,10 @@ async def pars_price(
                             # Округляем до 2 знаков после запятой
                             discounted_percentage = round(discounted_percentage, 2)
                             ru_price = await calculate_price(
-                                country[-2:],
-                                discounted_price,
-                                discounted_price)
+                                country_code=country[-2:],
+                                original_price=original_price,
+                                discounted_price=discounted_price,
+                            )
 
                             await repo_manager.product_price_repo.upsert_price(
                                 country_code=country[-2:],
@@ -134,9 +136,10 @@ async def pars_price(
                                     end_date_sale = None
 
                                 ru_price = await calculate_price(
-                                    country[-2:],
-                                    discounted_price,
-                                    discounted_price)
+                                    country_code=country[-2:],
+                                    original_price=original_price,
+                                    discounted_price=discounted_price,
+                                )
 
                                 await repo_manager.product_price_repo.upsert_price(
                                     country_code=country[-2:],
@@ -163,3 +166,12 @@ async def pars_price(
             exception += parsed_exceptions
 
         return old_links, new_links, exception
+
+
+if __name__ == '__main__':
+    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001"]
+    country = "en-US"
+    asyncio.run(pars_price(
+        links=links,
+        country=country,
+    ))

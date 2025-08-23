@@ -35,8 +35,8 @@ DEVICE_MAPPING = {
 
 
 main_game_list = [
-    'https://www.xbox.com/eu-EN/games/browse?orderby=Title+Desc',
-    'https://www.xbox.com/eu-EN/games/browse?orderby=Title+Asc'
+    'https://www.xbox.com/en-US/games/browse?orderby=Title+Desc',
+    'https://www.xbox.com/en-US/games/browse?orderby=Title+Asc'
 ]
 
 

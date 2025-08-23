@@ -62,7 +62,7 @@ async def start_parsing_price_product(callback_query: types.CallbackQuery, state
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text='✅Парсинг запущен.')
     start_time = time.time()
-    links = repo_manager.product_repo.get_url_products()
+    links = await repo_manager.product_repo.get_url_products()
     country = await repo_manager.country_repo.get_all_county_pars_product()
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text=f"Начат парсинг цен {len(links)} товаров.")

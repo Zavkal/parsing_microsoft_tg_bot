@@ -18,7 +18,7 @@ async def pars_link_for_auto_pars():
         buttons = driver.find_elements(By.XPATH, '//a[.//span[contains(text(), "SHOP MORE")]]')
 
         links = [button.get_attribute("href") for button in buttons if button.get_attribute("href")]
-        links = [link.replace("xbox.com/", "xbox.com/eu-EN/") for link in links]
+        links = [link.replace("xbox.com/", "xbox.com/en-US/") for link in links]
         driver.quit()
     except Exception as e:
         driver.quit()

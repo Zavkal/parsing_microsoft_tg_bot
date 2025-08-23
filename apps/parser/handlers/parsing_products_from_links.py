@@ -40,13 +40,13 @@ async def pars_product_links(
 
                 all_data = ProductDataEntity(
                     product_id=product_id,
-                    url_product=link.replace(link.split('/')[3], 'eu-EN'),
+                    url_product=link.replace(link.split('/')[3], 'en-US'),
                     sale_product=pars_sale,
                 )
 
                 # Проверяем, успешен ли запрос
                 if response.status != 200:
-                    link = link.replace(link.split('/')[3], 'eu-EN')
+                    link = link.replace(link.split('/')[3], 'en-US')
                     response, response_text = await fetch_for_product(session=session,
                                                        url=link)
                 if response.status == 200:
@@ -125,7 +125,7 @@ async def pars_product_links(
                                 device = ', '.join(DEVICE_MAPPING.get(d, d) for d in raw_devices)
                             except Exception as e:  # noqa
                                 try:
-                                    resp = requests.get(link.replace(link.split('/')[3], 'eu-EN'))
+                                    resp = requests.get(link.replace(link.split('/')[3], 'en-US'))
                                     match = re.search(pattern, resp.text, re.DOTALL)
                                     preloaded_state = match.group(1)
                                     preloaded_state_data = json.loads(preloaded_state)
@@ -164,8 +164,8 @@ async def pars_product_links(
 
 
 if __name__ == '__main__':
-    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001"]
-    country = "US"
+    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001", "https://www.xbox.com/eu-EN/games/store/steampunch-xbox-windows-bundle/9PNDFLNZ0TPJ/001"]
+    country = "ru-RU"
     asyncio.run(pars_product_links(
         links=links,
         country=country,

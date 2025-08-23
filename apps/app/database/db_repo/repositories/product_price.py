@@ -40,7 +40,7 @@ class ProductPriceRepository:
                     discounted_percentage=discounted_percentage,
                     ru_price=ru_price
                 )
-                await session.add(price)
+                session.add(price)
             else:
                 price.original_price = original_price
                 price.discounted_price = discounted_price
