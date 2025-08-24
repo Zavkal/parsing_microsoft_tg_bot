@@ -37,7 +37,7 @@ class ExchangeRepository:
     ) -> None:
         async with self.db.get_session() as session:
             stmt = update(Exchange).values(
-                date_exchange=date_exchange,
+                date_exchanged=date_exchange,
                 US=usd_to_rub,
                 TR=try_to_rub,
                 NG=ngn_to_rub,

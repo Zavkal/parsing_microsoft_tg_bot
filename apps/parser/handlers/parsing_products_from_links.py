@@ -25,7 +25,7 @@ async def pars_product_links(
         counter = 0
         for link in links:
             counter += 1
-            if counter % 100 == 0:
+            if counter % 400 == 0:
                 if callback:
                     await callback.bot.send_message(chat_id=callback.from_user.id,
                                                 text="Найдено 100 игр")

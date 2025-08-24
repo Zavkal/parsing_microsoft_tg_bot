@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from apps.parser.service.exchange import get_new_exchange
 from config_bot import repo_manager
 from apps.parser.service.calculate import calculate_price
 from apps.parser.handlers.parsing_products_from_links import pars_product_links
@@ -25,6 +26,8 @@ async def pars_price(
 
     if depth < 0:
         return [], [], []
+
+    await get_new_exchange()
 
     #  Отдельный парсер цен для Нигерии
     if country == "en-NG":
@@ -60,7 +63,7 @@ async def pars_price(
                             discounted_percentage = ((original_price - discounted_price) / original_price) * 100
 
                             # Округляем до 2 знаков после запятой
-                            discounted_percentage = round(discounted_percentage, 2)
+                            discounted_percentage = round(discounted_percentage, -1)
                             ru_price = await calculate_price(
                                 country_code=country[-2:],
                                 original_price=original_price,

@@ -84,7 +84,7 @@ class ProductRepository:
             await session.execute(stmt)
 
 
-    async def set_sale_status_for_all_products(self, product_ids: list[str]) -> None:
+    async def set_sale_status_true_for_products(self, product_ids: list[str]) -> None:
         async with self.db.get_session() as session:
             stmt = (
                 update(Product)

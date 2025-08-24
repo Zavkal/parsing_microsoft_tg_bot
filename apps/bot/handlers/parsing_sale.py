@@ -90,7 +90,7 @@ async def start_parsing_sale_(callback_query: types.CallbackQuery, state: FSMCon
         await repo_manager.product_repo.set_sale_status_false_all_products()
         # Необходимо все айдишники обернуть в распродажу!
         product_ids = [link.split('/')[-2] for link in sale_links]
-        await repo_manager.product_repo.set_sale_status_for_all_products(product_ids)
+        await repo_manager.product_repo.set_sale_status_true_for_products(product_ids=product_ids)
 
     else:
         await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
@@ -128,9 +128,10 @@ async def toggle_region_status(callback: types.CallbackQuery, state: FSMContext)
 @router.callback_query(F.data == "settings_pars_sale")
 async def settings_pars_sale(callback: types.CallbackQuery, state: FSMContext) -> None:
     text = await generate_text_pars_sale_settings()
-    msg = await callback.message.edit_text(text=text,
-                                     disable_web_page_preview=True)
-    await msg.edit_reply_markup(reply_markup=parsing_sale_settings_kb(msg_id=msg.message_id))
+    await callback.message.edit_text(text=text,
+                             reply_markup=parsing_sale_settings_kb(msg_id=callback.message.message_id),
+                             disable_web_page_preview=True,
+                             )
 
 
 @router.callback_query(F.data.startswith("add_link_for_pars"))

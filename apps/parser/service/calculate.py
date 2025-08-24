@@ -30,6 +30,7 @@ async def calculate_price(
                 discounted_price=discounted_price,
                 formula=formula,
             )
+            print(country_code, original_price, discounted_price)
             return orig_price_formula, discounted_price_formula
 
         elif "NG" == country_code:
