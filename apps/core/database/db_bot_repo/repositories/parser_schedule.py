@@ -1,7 +1,7 @@
 from sqlalchemy import update, select
 
-from apps.app.database.db_bot import DataBase
-from apps.app.database.db_bot_repo.models.parser_schedule import ParserSchedule
+from apps.core.database.db_bot import DataBase
+from apps.core.database.db_bot_repo.models.parser_schedule import ParserSchedule
 
 
 class ParserScheduleRepository:

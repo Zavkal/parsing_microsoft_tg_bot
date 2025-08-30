@@ -9,7 +9,7 @@ from config import moscow_tz
 from config_bot import repo_manager
 from apps.parser.entities.parser_entity import ParserName
 from apps.parser.service.last_pars import get_last_pars
-from apps.parser.handlers.start_big_parser import start_big_parser_products
+from apps.parser.service.start_big_parser import start_big_parser_products
 
 router = Router(name="Управление большим парсером")
 
@@ -29,7 +29,7 @@ async def start_parser(callback_query: types.CallbackQuery) -> None:
         "Парсер запущен"
     )
 
-    await start_big_parser_products(callback_query)
+    await start_big_parser_products()
     await callback_query.bot.send_message(chat_id=callback_query.from_user.id,
                                           text="Большой парсер окончил работу!")
     date = datetime.now(moscow_tz).strftime("%d-%m-%Y")

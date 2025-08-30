@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from apps.parser.service.exchange import get_new_exchange
@@ -171,10 +170,10 @@ async def pars_price(
         return old_links, new_links, exception
 
 
-if __name__ == '__main__':
-    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001"]
-    country = "en-US"
-    asyncio.run(pars_price(
-        links=links,
-        country=country,
-    ))
+# if __name__ == '__main__':
+#     links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001"]
+#     country = "en-US"
+#     asyncio.run(pars_price(
+#         links=links,
+#         country=country,
+#     ))

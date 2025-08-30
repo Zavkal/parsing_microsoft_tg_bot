@@ -1,4 +1,4 @@
-from apps.app.database.repositories_manager import RepoManager
+from apps.core.database.repositories_manager import RepoManager
 from config import regions, regions_name
 
 

@@ -6,10 +6,8 @@ import requests
 import json
 import re
 
-from aiogram import types
-
-from config import DEVICE_MAPPING
-from config_bot import repo_manager
+from config import DEVICE_MAPPING, ADMIN
+from config_bot import repo_manager, bot
 
 from apps.parser.entities.parser_data_entity import ProductDataEntity
 from apps.parser.service.fetch_for_parsing import fetch_for_product
@@ -18,7 +16,6 @@ from apps.parser.service.fetch_for_parsing import fetch_for_product
 async def pars_product_links(
         links: list,
         country: str,
-        callback: types.CallbackQuery = None,
         pars_sale: bool = False,
 ) -> None:
     async with aiohttp.ClientSession() as session:
@@ -26,15 +23,18 @@ async def pars_product_links(
         for link in links:
             counter += 1
             if counter % 400 == 0:
-                if callback:
-                    await callback.bot.send_message(chat_id=callback.from_user.id,
-                                                text="Найдено 100 игр")
+                await bot.send_message(
+                    chat_id=ADMIN,
+                    text="Найдено 400 игр",
+                )
             capabilities_list = []
             link = link.replace(link.split('/')[3], country)
             try:
                 # Отправляем GET-запрос
-                response, response_text = await fetch_for_product(session=session,
-                                                   url=link)
+                response, response_text = await fetch_for_product(
+                    session=session,
+                    url=link,
+                )
 
                 product_id = link.split('/')[-2]
 
@@ -48,7 +48,7 @@ async def pars_product_links(
                 if response.status != 200:
                     link = link.replace(link.split('/')[3], 'en-US')
                     response, response_text = await fetch_for_product(session=session,
-                                                       url=link)
+                                                                      url=link)
                 if response.status == 200:
 
                     # Используем регулярное выражение для поиска данных, начиная с window.__PRELOADED_STATE__
@@ -63,8 +63,8 @@ async def pars_product_links(
                                 f'{product_id}']
                             try:
                                 product_dlc = \
-                                preloaded_state_data['core2']['channels']['channelData'][f'WORKSWITH_{product_id}'][
-                                    'data']['products'][0]['productId']
+                                    preloaded_state_data['core2']['channels']['channelData'][f'WORKSWITH_{product_id}'][
+                                        'data']['products'][0]['productId']
                             except Exception as e:  # noqa
                                 product_dlc = ""
                             all_data.dlc = product_dlc
@@ -164,7 +164,8 @@ async def pars_product_links(
 
 
 if __name__ == '__main__':
-    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001", "https://www.xbox.com/eu-EN/games/store/steampunch-xbox-windows-bundle/9PNDFLNZ0TPJ/001"]
+    links = ["https://www.xbox.com/ru-RU/games/store/rain-world-downpour/9P0RMC2V6MTR/001",
+             "https://www.xbox.com/eu-EN/games/store/steampunch-xbox-windows-bundle/9PNDFLNZ0TPJ/001"]
     country = "ru-RU"
     asyncio.run(pars_product_links(
         links=links,

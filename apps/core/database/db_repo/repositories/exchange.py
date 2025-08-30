@@ -1,7 +1,7 @@
 from sqlalchemy import select, update
 
-from apps.app.database.db import DataBase
-from apps.app.database.db_repo.models.exchange import Exchange
+from apps.core.database.db import DataBase
+from apps.core.database.db_repo.models.exchange import Exchange
 
 
 class ExchangeRepository:

@@ -16,9 +16,11 @@ async def open_page_and_scroll(links: list = main_game_list):
 
     async def process_link(link):
         """Обрабатывает отдельную страницу."""
-        driver = Driver(headless=True,
-                        chromium_arg=["--disable-gpu", "--disable-software-rasterizer", "--disable-webgl"]
-                        )
+        driver = Driver(
+            headless=True,
+            no_sandbox=True,
+            disable_gpu=True,
+        )
         try:
             await asyncio.to_thread(driver.get, link)  # Открываем страницу
             await asyncio.sleep(2)  # Ждем загрузки

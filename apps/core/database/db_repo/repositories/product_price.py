@@ -1,7 +1,7 @@
 from sqlalchemy import select, update
 
-from apps.app.database.db import DataBase
-from apps.app.database.db_repo.models.product_price import ProductPrice
+from apps.core.database.db import DataBase
+from apps.core.database.db_repo.models.product_price import ProductPrice
 
 
 class ProductPriceRepository:

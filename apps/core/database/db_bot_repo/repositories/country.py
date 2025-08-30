@@ -1,7 +1,7 @@
 from sqlalchemy import select, update
 
-from apps.app.database.db_bot import DataBase
-from apps.app.database.db_bot_repo.models.country import Country
+from apps.core.database.db_bot import DataBase
+from apps.core.database.db_bot_repo.models.country import Country
 
 
 class CountryRepository:

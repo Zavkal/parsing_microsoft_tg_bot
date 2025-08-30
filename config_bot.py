@@ -4,12 +4,12 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from apps.app.database.db import DataBase as DataBase_db
-from apps.app.database.db_bot import DataBase as DataBase_db_bot
+from apps.core.database.db import DataBase as DataBase_db
+from apps.core.database.db_bot import DataBase as DataBase_db_bot
 
 from dotenv import load_dotenv
 
-from apps.app.database.repositories_manager import RepoManager
+from apps.core.database.repositories_manager import RepoManager
 
 load_dotenv()
 

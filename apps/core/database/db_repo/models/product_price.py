@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
-from apps.app.database.db_repo.models.base import Base, BaseMixin
+from apps.core.database.db_repo.models.base import Base, BaseMixin
 
 
 class ProductPrice(Base, BaseMixin):

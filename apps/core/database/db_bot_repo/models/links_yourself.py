@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 
-from apps.app.database.db_bot_repo.models.base import Base, BaseMixin
+from apps.core.database.db_bot_repo.models.base import Base, BaseMixin
 
 
 class LinkYourself(Base, BaseMixin):

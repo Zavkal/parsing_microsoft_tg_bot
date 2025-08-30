@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean
 from sqlalchemy.orm import relationship
 
-from apps.app.database.db_repo.models.base import Base, BaseMixin
+from apps.core.database.db_repo.models.base import Base, BaseMixin
 
 
 class Product(Base, BaseMixin):

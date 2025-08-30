@@ -1,4 +1,4 @@
-from apps.app.database.repositories_manager import RepoManager
+from apps.core.database.repositories_manager import RepoManager
 from apps.parser.entities.parser_entity import ParserName
 
 

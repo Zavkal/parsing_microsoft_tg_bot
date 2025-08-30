@@ -81,7 +81,7 @@ def generate_day_of_week_keyboard(parser_name: str) -> InlineKeyboardMarkup:
 
 def generate_day_of_month_keyboard(parser_name: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    for day in range(1, 32):
+    for day in range(1, 29):
         builder.button(
             text=str(day),
             callback_data=f"set_monthday:{parser_name}:{day}"

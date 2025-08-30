@@ -1,5 +1,5 @@
 from config import FREQUENCY_RU, DAYS_OF_WEEK_RU
-from apps.app.database.repositories_manager import RepoManager
+from apps.core.database.repositories_manager import RepoManager
 from apps.parser.entities.parser_entity import ParserName
 
 
