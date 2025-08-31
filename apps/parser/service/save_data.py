@@ -3,43 +3,42 @@ from apps.parser.service.calculate import calculate_price
 
 
 async def save_data_in_list(sort_by=True):
-    all_sale_products = await repo_manager.product_repo.get_all_sale_product()
+    all_sale_products = await repo_manager.product_repo.get_all_sale_product_id()
     game_entries = []  # Временный список для сортировки
 
-    for product in all_sale_products:
-        game = await repo_manager.product_repo.get_by_product_id(product_id=product.id)
-        all_price = await repo_manager.product_price_repo.get_prices_by_product(product_id=product.id)
+    for product_id in all_sale_products:
+        game = await repo_manager.product_repo.get_product_by_product_id(product_id=product_id)
+        all_price = await repo_manager.product_price_repo.get_prices_by_product(product_id=product_id)
         us_price = None
         ng_ua_prices = []
         ar_tr_prices = []
         discount_percentage = None
 
         # Проходим по всем странам и данным
-        for country_code, price_data_list in all_price.items():
-            if not price_data_list:  # Если данных по стране нет — пропускаем
+        for country_code, price_data in all_price.items():
+            if not price_data:  # Если данных по стране нет — пропускаем
                 continue
 
-            for price_data in price_data_list:
-                orig_price, disc_price = await calculate_price(
-                    original_price=price_data.get("original_price"),
-                    discounted_price=price_data.get('discounted_price'),
-                    country_code=country_code,
-                )
-                if orig_price == disc_price:  # Если нет скидки — пропускаем
-                    continue
+            orig_price, disc_price = await calculate_price(
+                original_price=price_data.get("original_price"),
+                discounted_price=price_data.get('discounted_price'),
+                country_code=country_code,
+            )
+            if orig_price == disc_price:  # Если нет скидки — пропускаем
+                continue
 
-                if country_code == 'US':
-                    us_price = disc_price
+            if country_code == 'US':
+                us_price = disc_price
 
-                if country_code in ['NG', 'UA']:
-                    ng_ua_prices.append(disc_price)
+            if country_code in ['NG', 'UA']:
+                ng_ua_prices.append(disc_price)
 
-                if country_code in ['AR', 'TR']:
-                    ar_tr_prices.append(disc_price)
+            if country_code in ['AR', 'TR']:
+                ar_tr_prices.append(disc_price)
 
-                # Берем первую доступную скидку (если её ещё нет)
-                if discount_percentage is None:
-                    discount_percentage = price_data.get('discounted_percentage')
+            # Берем первую доступную скидку (если её ещё нет)
+            if discount_percentage is None:
+                discount_percentage = price_data.get('discounted_percentage')
 
         # Если **нет цен вообще**, пропускаем игру
         if us_price is None and not ng_ua_prices and not ar_tr_prices:

@@ -48,12 +48,22 @@ class ProductPriceRepository:
                 price.ru_price = ru_price
 
 
-    async def get_prices_by_product(self, product_id: str):
+    async def get_prices_by_product(self, product_id: str) -> dict[str, dict]:
         """Получить все цены по товару"""
         async with self.db.get_session() as session:
             stmt = select(ProductPrice).where(ProductPrice.product_id == product_id)
             result = await session.execute(stmt)
-            return result.scalars().all()
+            prices: list[ProductPrice] = result.scalars().all()
+
+            return {
+                price.country_code: {
+                    "original_price": price.original_price,
+                    "discounted_price": price.discounted_price,
+                    "discounted_percentage": price.discounted_percentage,
+                    "ru_price": price.ru_price,
+                }
+                for price in prices
+            }
 
 
     async def update_ru_price(self, product_id: str, country_code: str, ru_price: float):

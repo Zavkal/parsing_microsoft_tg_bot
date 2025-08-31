@@ -51,7 +51,7 @@ async def add_link_for_pars_(message: types.Message, state: FSMContext) -> None:
     await msg_del.delete()
     formula = message.text.strip()
 
-    validate = "0123456789/*-+ "
+    validate = "0123456789/*-+ ."
 
     for symbol in formula:
         if symbol not in validate:

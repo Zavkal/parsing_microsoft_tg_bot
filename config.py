@@ -6,7 +6,7 @@ from apps.parser.entities.parser_entity import ParserName
 # Указываем часовой пояс Москвы
 moscow_tz = pytz.timezone("Europe/Moscow")
 
-ADMIN = "1637636761"  # 763197387 585028070 1637636761
+ADMIN = "585028070"  # 763197387 585028070 1637636761
 
 regions = ["IN", "NG", "US", "AR", "TR", "UA"]
 

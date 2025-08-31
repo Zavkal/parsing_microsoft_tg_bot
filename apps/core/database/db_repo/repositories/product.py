@@ -11,16 +11,24 @@ class ProductRepository:
         self.db = db
 
 
-    async def get_by_product_id(self, product_id: str):
+    async def get_product_by_product_id(self, product_id: str) -> dict:
         async with self.db.get_session() as session:
             stmt = select(Product).where(Product.product_id == product_id)
             result = await session.execute(stmt)
-            return result.scalars().first()
+            product: Product = result.scalars().first()
+            return product.to_dict()
+
+
+    async def get_all_sale_product_id(self) -> list[str]:
+        async with self.db.get_session() as session:
+            stmt = select(Product.product_id).where(Product.sale_product == True)
+            result = await session.execute(stmt)
+            return result.scalars().all()
 
 
     async def upsert_product(self, product_data: ProductDataEntity) -> None:
         async with self.db.get_session() as session:
-            product = await self.get_by_product_id(product_data.product_id)
+            product = await self.get_product_by_product_id(product_data.product_id)
             if not product:
                 product = Product(
                     product_id=product_data.product_id,

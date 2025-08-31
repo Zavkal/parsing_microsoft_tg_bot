@@ -46,7 +46,7 @@ async def pars_price(
                     url = url.replace("www.microsoft.com/en-ng/p", "www.xbox.com/en-US/games/store")
                     url = url.replace(url.split("/")[-1], product_id)
 
-                    product = await repo_manager.product_repo.get_by_product_id(product_id=product_id)
+                    product = await repo_manager.product_repo.get_product_by_product_id(product_id=product_id)
                     if product:
                         old_links.append(url)
                         # Извлекаем цены
@@ -114,7 +114,7 @@ async def pars_price(
                 link = link.replace(link.split('/')[3], country)
                 product_id = link.split('/')[-2]
 
-                if await repo_manager.product_repo.get_by_product_id(product_id=product_id):
+                if await repo_manager.product_repo.get_product_by_product_id(product_id=product_id):
                     old_links.append(link)
                     html_content = await fetch_for_price(session=session,
                                                          url=link)
@@ -131,7 +131,7 @@ async def pars_price(
                                 if specific_prices:
                                     original_price = specific_prices[0].get('msrp', 0)
                                     discounted_price = specific_prices[0].get('listPrice', 0)
-                                    discounted_percentage = specific_prices[0].get('discountPercentage', 0)
+                                    discounted_percentage = round(float(specific_prices[0].get('discountPercentage', 0)), -1)
                                     end_date_sale = specific_prices[0].get('endDate')
                                 else:
                                     original_price = discounted_price = discounted_percentage = 0
