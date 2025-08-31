@@ -9,10 +9,12 @@ from apps.bot.handlers.get_data import router as get_data_file
 from apps.bot.handlers.big_parser import router as big_parser
 from apps.bot.handlers.parser_price import router as parser_price
 from apps.bot.handlers.formulas_exchange_handler import router as formulas_exchange
+from apps.parser.service.pars_shedule import ParserSchedulerManager
 from config_bot import dp, bot
 
 
 async def main() -> None:
+    await ParserSchedulerManager().refresh_schedule()
     logging.info("[Запуск бота] Бот запущен ассинхронно!")
     dp.include_routers(
         start_router,

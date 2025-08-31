@@ -33,24 +33,26 @@ class ParserSchedulerManager:
 
         # создаём новые задачи
         for parser in parsers:
-            hour, minute = map(int, parser.time_pars.split(":"))
-            if parser.frequency == "daily":
+            hour, minute = map(int, parser.get("time_pars").split(":"))
+            if parser.get("frequency") == "daily":
                 trigger = CronTrigger(hour=hour, minute=minute)
 
-            elif parser.frequency == "weekly" and parser.day_of_week:
-                trigger = CronTrigger(day_of_week=parser.day_of_week.lower(), hour=hour, minute=minute)
+            elif parser.get("frequency") == "weekly" and parser.get("day_of_week"):
+                trigger = CronTrigger(day_of_week=parser.get("day_of_week").lower(), hour=hour, minute=minute)
 
-            elif parser.frequency == "monthly" and parser.day_of_month:
-                trigger = CronTrigger(day=int(parser.day_of_month), hour=hour, minute=minute)
+            elif parser.get("frequency") == "monthly" and parser.get("day_of_month"):
+                trigger = CronTrigger(day=int(parser.get("day_of_month")), hour=hour, minute=minute)
 
             else:
-                logging.error(f"ОШИБКА СОЗДАНИЯ АВТОПАРСА {parser.parser_name}")
+                logging.error(f"ОШИБКА СОЗДАНИЯ АВТОПАРСА {parser.get('parser_name')}")
                 continue
 
+            print(trigger)
+
             job = self.scheduler.add_job(
-                self.run_parser, trigger, args=[parser.parser_name], id=str(parser.id)
+                self.run_parser, trigger, args=[parser.get("parser_name")], id=str(parser.get("id")),
             )
-            self.jobs[str(parser.id)] = job
+            self.jobs[str(parser.get("id"))] = job
 
     @staticmethod
     async def run_parser(parser_name: str) -> None:
